@@ -142,10 +142,24 @@ require([
     var tree_view_root_bbox = tree_view_root[0][0].getBBox();
     var rate = size.height/(tree_view_root_bbox.height + tree_view_root_bbox.y + 60);
 
-    zoom
-      .scale(rate);
+    zoom.scale(rate);
     zooming();
   }
+
   toolbar.regist('适应屏幕', fit_in_screen);
+
+  function fold_all() {
+    mock_data.forEach(function( node ) {
+      node.joint_switch && node.joint_switch.toggle(false);
+    });
+  }
+  toolbar.regist('折叠所有', fold_all);
+
+  function unfold_all() {
+    mock_data.forEach(function( node ) {
+      node.joint_switch && node.joint_switch.toggle(true);
+    });
+  }
+  toolbar.regist('展开所有', unfold_all);
 
 });

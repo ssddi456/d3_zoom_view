@@ -26,7 +26,18 @@ define([
       return offset;
     }
 
-
+    function append_archor ( text, node ) {
+      text.text( text.text() +' ');
+      text.append('a')
+        .text('详情')
+        .attr({
+          'xlink:href' : 'http://123',
+          'target'     : '_blank'
+        })
+        .style({
+          fill : 'blue'
+        });
+    }
 
     var g_lod = 0;
 
@@ -68,6 +79,7 @@ define([
             .append('tspan')
             .text(function(d) { return d; });
 
+        append_archor(text.select('tspan'));
 
         var lineheight = tspans[0][0].getBBox().height;
         tspans
@@ -94,6 +106,9 @@ define([
                         .attr({
                           x : 30
                         });
+
+        append_archor(text_lod1);
+
 
         var lod1_bbox = text_lod1[0][0].getBBox();
         text_lod1.attr('y', lod1_bbox.height);

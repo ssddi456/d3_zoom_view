@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Document</title>
+  <style>
+    html,body{
+      height: 100%;
+      width: 100%;
+      padding: 0;
+      margin: 0;
+    }
+    .wrapper{
+      position: absolute;
+      top: 0;
+      left: 0;
+      bottom: 0;
+      right: 0;
+    }
+    .overlay{
+      fill: #eee;
+    }
+    .grid{
+      stroke : #ddd;
+    }
+    .toolbar{
+      position: fixed;
+      width: 100%;
+      display: flex;
+      bottom: 30px;
+
+      justify-content: center;
+
+    }
+    .toolbar .btn-group{
+    }
+  </style>
+  <link rel="stylesheet" href="http://cdn.staticfile.org/twitter-bootstrap/3.3.1/css/bootstrap.css">
+</head>
+<body>
+
+  <div class="wrapper"></div>
+
+  <div class="toolbar form-inline">
+    <div class="form-group">
+      <div class="btn-group"></div>
+    </div>
+  </div>
+
+  <script src="http://cdn.staticfile.org/d3/3.4.13/d3.js"></script>
+  <script src="http://cdn.staticfile.org/require.js/2.1.15/require.js"></script>
+  <script src="http://cdn.staticfile.org/underscore.js/1.7.0/underscore.js"></script>
+  <script src="http://cdn.staticfile.org/jquery/2.1.1-rc2/jquery.js"></script>
+  <script>
+  require.config({
+    paths :{
+      ko : 'http://cdn.staticfile.org/knockout/3.2.0/knockout-min',
+    }
+  });
+  </script>
+  <script src="./app.js"></script>
+</body>
+</html>

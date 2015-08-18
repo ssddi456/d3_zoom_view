@@ -49,7 +49,9 @@ require([
     grid.y.selectAll('.y.grid').call(grid_y);
 
     tree_view.update();
-    _mini_map.update();
+    setTimeout(function() {
+      _mini_map.update();
+    },10);
 
     toolbar.label('scale', '缩放: ' + (zoom.scale() * 100).toFixed(2) + '%' );
   }
@@ -96,14 +98,15 @@ require([
                     .zoom(zoom)
                     .scale(scale)
                     .zoom_require(zooming)
-                    .zoom_reset(reset_zoom);
+                    .zoom_reset(reset_zoom)
+
 
   var _mini_map = mini_map(svg, size)
                     .zoom(zoom)
                     .scale(scale)
                     .item(tree_view_root);
 
-  zooming ();
+  zooming();
 
   function grid_x (g) {
     g.each(function(){
@@ -161,5 +164,46 @@ require([
     });
   }
   toolbar.regist('展开所有', unfold_all);
+
+
+  function horizontal_layout( pos, cbox, idx, lod ) {
+
+    var v_mid = cbox.y + cbox.height/2;
+    var joint_in = [cbox.x,     v_mid];
+    var left = lod ? 600 : 300;
+
+    var ret = {
+      joint_in  : joint_in,
+      joint_out : [cbox.width, v_mid],
+      cbox      : cbox,
+      sub_pos : {
+        top  : 0,
+        left : left
+      },
+      joint_line_data : null
+    };
+
+    if( pos.joint ){
+      var x_start = joint_in[0];
+      var x_end   = pos.joint[0] - left + 20;
+      var x_mid   = (x_start + x_end)/2;
+
+      ret.joint_line_data = [
+        [x_end, pos.joint[1] - pos.top],
+        [x_mid, pos.joint[1] - pos.top],
+        [x_mid, joint_in[1]],
+        joint_in
+      ];
+    }
+
+    return ret;
+  }
+
+  function toggle_layout () {
+    tree_view.layout(tree_view.layout() ? null : horizontal_layout);
+    zooming();
+  }
+
+  toolbar.regist('切换布局', toggle_layout);
 
 });

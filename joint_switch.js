@@ -75,6 +75,10 @@ define([
           events.push(handle);
           return this;
         },
+        translate : function( joint ) {
+          joint_container.attr('transform','translate(' + joint.join(',') + ')');
+          return this;
+        },
         container : joint_container
       };
       return ret;

@@ -29,6 +29,9 @@ define([
 
   root.add_child({
     text : 'child 1'
+  })
+  .add_child({
+    text : 'child 1.1'
   });
 
   var child2 = root.add_child({

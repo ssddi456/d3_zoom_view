@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>Document</title>
+    <link rel="stylesheet" href="http://cdn.staticfile.org/twitter-bootstrap/3.3.6/css/bootstrap.css">
+    <link rel="stylesheet" href="./style2.css">
+</head>
+
+<body>
+    
+    <div class="btn-toolbar">
+        <div class="btn-group">
+            <button type="button" class="btn btn-default" data-bind="click: load">load</button>
+        </div>
+        <div class="btn-group">
+            <button type="button" class="btn btn-default" data-bind="click: save">save</button>
+        </div>
+        <div class="btn-group"></div>
+    </div>
+    
+    <scroll-tree params="tree: tree"></scroll-tree>
+    
+    <script src="http://cdn.staticfile.org/jquery/2.1.1-rc2/jquery.js"></script>
+    <script src="http://cdn.staticfile.org/underscore.js/1.7.0/underscore.js"></script>
+    <script src="http://cdn.staticfile.org/require.js/2.1.15/require.js"></script>
+    <script>
+        require.config({
+            paths: {
+                ko: 'http://cdn.staticfile.org/knockout/3.4.1/knockout-debug',
+            }
+        });
+    </script>
+    <script src="./app2.js"></script>
+</body>
+
+</html>

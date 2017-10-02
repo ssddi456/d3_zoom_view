@@ -32,6 +32,7 @@ require([
         var prefix = 'myNoval_';
         var vm = {
             tree: ko.observable(),
+            viewType: ko.observable('editView'),
             save: function () {
                 var nodes = this.tree().childNodes.slice();
                 nodes.forEach(function (node, idx) {

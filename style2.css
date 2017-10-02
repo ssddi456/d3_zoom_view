@@ -1,54 +1,94 @@
-scroll-tree{
-    display: flex;
+html{
+    overflow-y: hidden;
 }
 
-scroll-row{
-    flex: 1;
+scroll-tree,
+edit-tree
+{
     display: block;
-    position: relative;
 }
 
-scroll-row .wrap {
-    width: 100%;
+.scroll-row, 
+scroll-row
+{
+    width: 20%;
+    display: block;
     position: absolute;
+    left:0;
+    top: 0;
+    bottom: 0;
+}
+
+.scroll-row .wrap, 
+scroll-row .wrap 
+{
+    width: 100%;
+    position: relative;
     opacity: 0.8;
 }
-scroll-row.active{
-    flex:2;
+.scroll-row.active, 
+scroll-row.active
+{
+    /* width: 40%; */
 }
+
+.scroll-row.active .wrap, 
 scroll-row.active .wrap{
     opacity: 1;
 }
 
-scroll-node{
+scroll-node,
+.scroll-node
+{
     position: relative;
     display: block;
     opacity: 0.8;
-    background-color:  #bfbfbf;
-}
-scroll-row.active .wrap scroll-node{
-    opacity: 1;
-    background-color:  #E0E0E0;
+    background-color:  #ececec;
 }
 
-scroll-row .wrap scroll-node.active, scroll-row.active .wrap scroll-node.active{
+.scroll-row.active .wrap scroll-node,
+.scroll-row.active .wrap .scroll-node,
+scroll-row.active .wrap scroll-node,
+scroll-row.active .wrap .scroll-node
+{
+    opacity: 1;
+    background-color:  #fbfbfb;
+}
+
+.scroll-row .wrap scroll-node.active,
+.scroll-row .wrap .scroll-node.active,
+.scroll-row.active .wrap scroll-node.active,
+.scroll-row.active .wrap .scroll-node.active,
+scroll-row .wrap scroll-node.active,
+scroll-row .wrap .scroll-node.active,
+scroll-row.active .wrap scroll-node.active,
+scroll-row.active .wrap .scroll-node.active
+{
     opacity: 1;
     background-color:  #ffffff;
 }
-scroll-node .content{
-    border: 1px solid grey;
+scroll-node .content,
+.scroll-node .content
+{
+    box-shadow: 0 0 2px 0px #afafaf;
     padding: 20px;
     margin: 0;
 }
 
-scroll-node .add_sibling, scroll-node .add_child{
+scroll-node .add_sibling,
+.scroll-node .add_sibling,
+scroll-node .add_child,
+.scroll-node .add_child
+{
     position: absolute;
     background-color: #ffffff;
     text-align: center;
     display: none;
     box-shadow: 0 0 7px 0px grey;
 }
-scroll-node .add_sibling{
+scroll-node .add_sibling,
+.scroll-node .add_sibling
+{
     bottom: 0;
     left:0;
     right: 0;
@@ -56,7 +96,9 @@ scroll-node .add_sibling{
     width: 60px;
 }
 
-scroll-node .add_child{
+scroll-node .add_child,
+.scroll-node .add_child
+{
     top:0;
     bottom:0;
     margin-bottom: auto;
@@ -66,13 +108,20 @@ scroll-node .add_child{
     height: 60px;
 }
 
-scroll-node.active .add_sibling, scroll-node.active .add_child{
+scroll-node.active .add_sibling, 
+.scroll-node.active .add_sibling, 
+scroll-node.active .add_child,
+.scroll-node.active .add_child
+{
     display: block;
 }
 
 editable-text {
     display: block;
     position: relative;
+}
+editable-text p{
+    white-space: pre-wrap;
 }
 editable-text textarea{
     width: 100%;
@@ -82,6 +131,9 @@ editable-text .icon{
     right: 0;
     display: none;
 }
-scroll-node.active editable-text .icon{
+
+scroll-node.active editable-text .icon,
+.scroll-node.active editable-text .icon
+{
     display: block;
 }

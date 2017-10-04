@@ -1,6 +1,60 @@
 html{
-    overflow-y: hidden;
+
 }
+
+
+/* Common styles for all types */
+.bs-callout {
+    padding: 20px;
+    margin: 20px 0;
+    border: 1px solid #eee;
+    border-left-width: 5px;
+    border-radius: 3px;
+  }
+  .bs-callout h4 {
+    margin-top: 0;
+    margin-bottom: 5px;
+  }
+  .bs-callout p:last-child {
+    margin-bottom: 0;
+  }
+  .bs-callout code {
+    border-radius: 3px;
+  }
+  
+  /* Tighten up space between multiple callouts */
+  .bs-callout + .bs-callout {
+    margin-top: -5px;
+  }
+  
+  /* Variations */
+  .bs-callout-danger {
+    border-left-color: #ce4844;
+  }
+  .bs-callout-danger h4 {
+    color: #ce4844;
+  }
+  .bs-callout-warning {
+    border-left-color: #aa6708;
+  }
+  .bs-callout-warning h4 {
+    color: #aa6708;
+  }
+  .bs-callout-info {
+    border-left-color: #1b809e;
+  }
+  .bs-callout-info h4 {
+    color: #1b809e;
+  }
+  
+  .bs-callout-normal {
+    border-left-color: #30AA5F;
+  }
+  .bs-callout-normal h4 {
+    color: #30AA5F;
+  }
+  
+
 
 scroll-tree,
 edit-tree
@@ -122,18 +176,31 @@ editable-text {
 }
 editable-text p{
     white-space: pre-wrap;
+    display: inline-block;
 }
 editable-text textarea{
     width: 100%;
 }
 editable-text .icon{
-    position: absolute;
-    right: 0;
+    padding-left: 10px;
+}
+
+scroll-node editable-text .icon,
+.scroll-node editable-text .icon
+{
     display: none;
 }
 
 scroll-node.active editable-text .icon,
 .scroll-node.active editable-text .icon
 {
+    display: initial;
+}
+
+
+characters, character-card {
     display: block;
+}
+characters {
+    padding:0 20px;
 }

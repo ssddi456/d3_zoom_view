@@ -1,5 +1,6 @@
 define([
-    './scroll_row'
+    './scroll_row',
+    './character_card'
 ], function(
 
 ) {

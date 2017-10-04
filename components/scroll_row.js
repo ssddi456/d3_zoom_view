@@ -273,7 +273,7 @@ define([
 
                             var parent = newVal.parent;
 
-                            if( parent != vm.parentRow()[0] ){
+                            if (parent != vm.parentRow()[0]) {
                                 vm.parentRow.splice(0, 1, newVal.parent);
                                 // make a patch here to make scroll property;
                                 setTimeout(function () {
@@ -282,9 +282,13 @@ define([
                                     newVal.parent.vm.element.addClass('active');
                                     newVal.parent.vm.tryTopAlignTo(newVal.vm.screenTop(), 1, true);
                                 });
+                            } else {
+                                setTimeout(function () {
+                                    newVal.parent.vm.tryTopAlignTo(newVal.vm.screenTop(), 1, true);
+                                })
                             }
-                            
-                            
+
+
 
                             if (newVal.tags) {
                                 newVal.tags.forEach(function (tag) {
@@ -654,16 +658,16 @@ define([
             ].join('')
         });
 
-        function findLastVisibleNode (node) {
-            for(var i = node.childNodes.length - 1; i >= 0; i -- ){
+        function findLastVisibleNode(node) {
+            for (var i = node.childNodes.length - 1; i >= 0; i--) {
                 var node = node.childNodes[i];
-                if(node.childNodes.length){
+                if (node.childNodes.length) {
                     var lastVisibleNode = findLastVisibleNode(node);
-                    if(lastVisibleNode){
+                    if (lastVisibleNode) {
                         return lastVisibleNode;
                     }
                 } else {
-                    if(node.vm && !node.vm.disposed){
+                    if (node.vm && !node.vm.disposed) {
                         return node;
                     }
                 }
@@ -676,7 +680,7 @@ define([
                     var nodeVM = createNodeVM(params, componentInfo);
                     nodeVM.appendSibling = function () {
                         var self = this;
-                        if(this.row.idx() == 1){
+                        if (this.row.idx() == 1) {
                             var newNode = this.row.addNode(this.node.parent, this.idx() + 1, this.nIndex() + 1);
                         } else if (this.row.idx() == 0) {
                             // so we need caculate idx here;
@@ -741,6 +745,7 @@ define([
                     var $element = $(componentInfo.element);
                     var vm = {
                         value: params.value,
+                        type: params.type || 'textarea',
                         editing: ko.observable(false),
                         edit: function () {
                             this.editing(true);
@@ -752,13 +757,16 @@ define([
                     vm.editing.subscribe(function (newVal) {
                         if (newVal) {
                             setTimeout(function () {
-                                var $textarea = $element.find('textarea');
+                                var $textarea = $element.find('textarea, input');
                                 $textarea.focus();
-                                function setHeight() {
-                                    $textarea.height($textarea[0].scrollHeight - parseFloat($textarea.css('padding-top')) - parseFloat($textarea.css('padding-bottom')));
+
+                                if (vm.type == 'textarea') {
+                                    function setHeight() {
+                                        $textarea.height($textarea[0].scrollHeight - parseFloat($textarea.css('padding-top')) - parseFloat($textarea.css('padding-bottom')));
+                                    }
+                                    setHeight();
+                                    $textarea.on('input', setHeight);
                                 }
-                                setHeight();
-                                $textarea.on('input', setHeight);
                             });
                         }
                     });
@@ -767,12 +775,18 @@ define([
             },
             template: [
                 '<!-- ko if: editing -->',
+                '<!-- ko if: type == \'textarea\' -->',
                 '<textarea data-bind="value: value, event:{blur: endEdit}"></textarea>',
                 '<!-- /ko -->',
-                '<!-- ko ifnot: editing -->',
-                '<i class="icon glyphicon glyphicon-edit" data-bind="click: edit"></i>',
-                '<p data-bind="text: value, event:{dblclick: edit}"></p>',
+                '<!-- ko if: type == \'input\' -->',
+                '<input type="text" data-bind="value: value, event:{blur: endEdit}"></input>',
                 '<!-- /ko -->',
+                '<!-- /ko -->',
+                '<!-- ko ifnot: editing -->',
+                '<p data-bind="text: value, event:{dblclick: edit}"></p>',
+                '<i class="icon glyphicon glyphicon-edit" data-bind="click: edit"></i>',
+                '<!-- /ko -->',
+                '<div class="clear"></div>',
             ].join('')
         });
 

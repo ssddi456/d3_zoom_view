@@ -29,10 +29,16 @@ require([
             }
             return ret;
         }
-        var prefix = 'myNoval_';
+        var storyPrefix = 'myNoval_';
+        var characterPrefix = 'myNovalCharacter_';
+
         var vm = {
-            tree: ko.observable(),
             viewType: ko.observable('editView'),
+            tab: ko.observable('character'),
+
+            tree: ko.observable(),
+            characters: ko.observable([]),
+
             save: function () {
                 var nodes = this.tree().childNodes.slice();
                 nodes.forEach(function (node, idx) {
@@ -40,13 +46,13 @@ require([
                 });
                 while (nodes.length) {
                     var currentNode = nodes.shift();
-                    var content = currentNode.content();
-                   
+                    var content = ko.unwrap(currentNode.content);
+
                     if (!currentNode.id) {
                         currentNode.id = UUID();
                     }
 
-                    localStorage.setItem(prefix + currentNode.id,
+                    localStorage.setItem(storyPrefix + currentNode.id,
                         JSON.stringify({
                             content: content,
                             id: currentNode.id,
@@ -61,17 +67,39 @@ require([
                         });
                     }
                 }
+                // so i should implements the characters save/load
+                var characters = this.characters();
+                characters.forEach(function (character, idx) {
+                    if (!character.id) {
+                        character.id = UUID();
+                    }
+                    localStorage.setItem(characterPrefix + character.id,
+                        JSON.stringify({
+                            id: character.id,
+                            idx: idx,
+                            name: ko.unwrap(character.name),
+                            desc: ko.unwrap(character.desc)
+                        }));
+                })
             },
             load: function () {
                 var map = {};
                 var newTree = {
                     childNodes: []
                 };
+                var characters = [];
                 Object.keys(localStorage).forEach(function (key) {
-                    if (key.indexOf(prefix) === 0) {
+                    if (key.indexOf(storyPrefix) === 0) {
                         var node = JSON.parse(localStorage.getItem(key));
                         node.childNodes = [];
                         map[node.id] = node;
+                    } else if (key.indexOf(characterPrefix) === 0) {
+                        var node = JSON.parse(localStorage.getItem(key));
+                        if(node.idx){
+                            characters[node.idx] = node;
+                        } else {
+                            characters.push(node);
+                        }
                     }
                 });
 
@@ -86,12 +114,18 @@ require([
                 });
 
                 this.tree(newTree);
+                this.characters(characters);
                 return newTree;
             }
         };
 
-        if(!vm.load().childNodes.length){
+        if (!vm.load().childNodes.length) {
             vm.tree(tree);
+        }
+
+        window.onbeforeunload = function () {
+            console.log('save');
+            vm.save();
         }
 
         ko.applyBindings(vm);

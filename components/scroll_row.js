@@ -1,6 +1,8 @@
 define([
+    '../entities/story',
     'ko'
 ], function (
+    story,
     ko
 ) {
 
@@ -40,30 +42,19 @@ define([
 
         'use strict';
 
-        function createNewNode(parentNode, childIdx) {
-            var newNode = { content: ko.observable('test'), childNodes: [] };
-            if (parentNode) {
-                newNode.parent = parentNode;
-                if (!parentNode.childNodes) {
-                    parentNode.childNodes = [];
-                }
-                parentNode.childNodes.splice(childIdx, 0, newNode);
-            }
-            return newNode;
-        }
-
         ko.components.register('scroll-tree', {
             viewModel: {
                 createViewModel: function (params, componentInfo) {
+                    var characters = params.characters;
                     // control scroll here
-
                     var vm = {
+                        characters: characters,
                         element: $(componentInfo.element),
                         rows: ko.observableArray([]),
                         activeRow: ko.observable(),
                         activeNode: ko.observable(),
                         addNode: function (parentNode, rowIdx, colIdx, childIdx) {
-                            var newNode = createNewNode(parentNode, childIdx);
+                            var newNode = story(parentNode, childIdx);
 
                             var row = this.rows()[rowIdx];
                             if (!row) {
@@ -77,21 +68,22 @@ define([
                         init: function (tree) {
 
                             tree.vm = {
-                                children: [],
                                 node: tree,
                             };
 
                             var currentLevel = tree.childNodes;
                             var nextLevel = [];
                             var currentRow = ko.observableArray();
+                            var shouldFocusOn;
 
                             while (currentLevel && currentLevel.length) {
                                 for (var i = 0; i < currentLevel.length; i++) {
                                     var nodeInfo = currentLevel[i];
-                                    nodeInfo.content = ko.observable(ko.unwrap(nodeInfo.content));
-                                    if (!nodeInfo.parent) {
-                                        nodeInfo.parent = tree;
+                                    if (nodeInfo.hasFocus) {
+                                        shouldFocusOn = nodeInfo;
                                     }
+                                    story.load(nodeInfo, nodeInfo.parent || tree, characters);
+
                                     currentRow.push(nodeInfo);
                                     if (nodeInfo.childNodes && nodeInfo.childNodes.length) {
                                         for (var j = 0; j < nodeInfo.childNodes.length; j++) {
@@ -105,6 +97,13 @@ define([
                                 currentRow = ko.observableArray();
                                 currentLevel = nextLevel;
                                 nextLevel = [];
+                            }
+                            if (shouldFocusOn) {
+                                var self = this;
+                                setTimeout(function () {
+                                    self.activeNode(shouldFocusOn);
+                                    shouldFocusOn.vm.centery();
+                                });
                             }
                         },
                         scrollRow: function (vm, e) {
@@ -138,27 +137,31 @@ define([
 
                     vm.activeNode.subscribe(function (oldVal) {
                         if (oldVal) {
+                            oldVal.isActive(false);
+                            oldVal.hasFocus(false);
+
+                            oldVal.childNodes.forEach(function (node) {
+                                node.isActive(false);
+                            });
                             oldVal = oldVal.vm;
-                            oldVal.element.removeClass('active');
                             oldVal.allParents(function (parent) {
-                                parent.element.removeClass('active');
-                            })
-                            oldVal.children.forEach(function (node) {
-                                node.element.removeClass('active');
+                                parent.node.isActive(false);
                             });
                         }
                     }, null, "beforeChange");
 
                     vm.activeNode.subscribe(function (newVal) {
                         if (newVal) {
-                            newVal = newVal.vm;
-                            newVal.element.addClass('active');
-                            newVal.allParents(function (parent) {
-                                parent.element.addClass('active');
-                            })
+                            newVal.isActive(true);
+                            newVal.hasFocus(true);
 
-                            newVal.children.forEach(function (node) {
-                                node.element.addClass('active');
+                            newVal.childNodes.forEach(function (node) {
+                                node.isActive(true);
+                            });
+
+                            newVal = newVal.vm;
+                            newVal.allParents(function (parent) {
+                                parent.node.isActive(true);
                             });
                         }
                     });
@@ -179,7 +182,7 @@ define([
             },
             template: [
                 '<!-- ko foreach: {data: rows, as: "row"} -->',
-                '<scroll-row params="{ nodes: row, tree: $component, idx: $index }"',
+                '<scroll-row params="{ nodes: row, tree: $component, idx: $index, characters: $component.characters }"',
                 '            data-bind="click:$component.activeRow, ',
                 '                       event: { wheel: $component.scrollRow },',
                 '                       style: { \'margin-left\': $index() * 20 + \'%\' }',
@@ -196,17 +199,20 @@ define([
                     var parentRow = ko.observableArray();
                     var mainRow = ko.observableArray();
                     var tagsRow = ko.observableArray();
+                    var characters = params.characters;
+
                     var vm = {
                         parentRow: parentRow,
                         mainRow: mainRow,
                         tagsRow: tagsRow,
+                        characters: params.characters,
                         activeNode: ko.observable(),
                         addNode: function (parentNode, rowIdx, colIdx, childIdx) {
                             /**
                              * rowIdx: 1 main row, addSiblings
                              * rowIdx: 2 new row, addNewChild
                              */
-                            var newNode = createNewNode(parentNode, childIdx);
+                            var newNode = story(parentNode, childIdx);
                             if (rowIdx == 2) {
                                 // 这说明是第一个子节点，应当把这个父节点移走，把子节点加入mainRow
                                 this.mainRow.splice(colIdx, 1, newNode);
@@ -219,27 +225,43 @@ define([
                             this.mainRow.splice(0, Infinity);
 
                             tree.vm = {
-                                children: [],
                                 node: tree,
                             };
 
                             var currentLevel = tree.childNodes.slice();
-
+                            var shouldFocusOn;
                             while (currentLevel && currentLevel.length) {
                                 var nodeInfo = currentLevel.shift();
-                                nodeInfo.content = ko.observable(ko.unwrap(nodeInfo.content));
-                                if (!nodeInfo.parent) {
-                                    nodeInfo.parent = tree;
-                                }
+
+                                story.load(nodeInfo, nodeInfo.parent || tree, characters);
+
                                 if (nodeInfo.childNodes && nodeInfo.childNodes.length) {
                                     for (var j = 0; j < nodeInfo.childNodes.length; j++) {
                                         var childNode = nodeInfo.childNodes[nodeInfo.childNodes.length - j - 1];
                                         childNode.parent = nodeInfo;
                                         currentLevel.unshift(childNode);
                                     }
+                                    if (nodeInfo.hasFocus()) {
+                                        nodeInfo.hasFocus(false);
+                                        // so we should focus on it first visible children
+                                        while (nodeInfo.childNodes.length) {
+                                            nodeInfo = nodeInfo.childNodes[0];
+                                        }
+                                        nodeInfo.hasFocus(true);
+                                    }
                                 } else {
                                     this.mainRow.push(nodeInfo);
+                                    if (nodeInfo.hasFocus()) {
+                                        shouldFocusOn = nodeInfo;
+                                    }
                                 }
+                            }
+                            if (shouldFocusOn) {
+                                var self = this;
+                                setTimeout(function () {
+                                    self.activeNode(shouldFocusOn);
+                                    shouldFocusOn.vm.centery();
+                                });
                             }
                         },
                         scrollRow: function (vm, self, e) {
@@ -263,13 +285,25 @@ define([
 
                     vm.activeNode.subscribe(function (oldVal) {
                         if (oldVal) {
-                            oldVal.vm.element.removeClass('active');
+                            oldVal.isActive(false);
+                            oldVal.hasFocus(false);
+
+                            oldVal.childNodes.forEach(function (node) {
+                                node.isActive(false);
+                            });
+
+                            oldVal = oldVal.vm;
+                            oldVal.allParents(function (parent) {
+                                parent.node.isActive(false);
+                            });
                         }
                     }, null, 'beforeChange');
                     vm.activeNode.subscribe(function (newVal) {
                         vm.tagsRow([]);
                         if (newVal) {
-                            newVal.vm.element.addClass('active');
+                            newVal.isActive(true);
+                            newVal.hasFocus(true);
+                            newVal.parent.isActive(true);
 
                             var parent = newVal.parent;
 
@@ -277,18 +311,15 @@ define([
                                 vm.parentRow.splice(0, 1, newVal.parent);
                                 // make a patch here to make scroll property;
                                 setTimeout(function () {
-                                    newVal.vm.parent = newVal.parent.vm;
-                                    newVal.parent.vm.children.push(newVal.vm);
-                                    newVal.parent.vm.element.addClass('active');
-                                    newVal.parent.vm.tryTopAlignTo(newVal.vm.screenTop(), 1, true);
+                                    var parentVM = newVal.parent.vm;
+                                    newVal.vm.parent = parentVM;
+                                    parentVM.tryTopAlignTo(newVal.vm.screenTop(), 1, true);
                                 });
                             } else {
                                 setTimeout(function () {
                                     newVal.parent.vm.tryTopAlignTo(newVal.vm.screenTop(), 1, true);
                                 })
                             }
-
-
 
                             if (newVal.tags) {
                                 newVal.tags.forEach(function (tag) {
@@ -306,19 +337,19 @@ define([
                 }
             },
             template: [
-                '<edit-row params="{ nodes: parentRow, tree: $component, idx: function(){return 0;} }"',
+                '<edit-row params="{ nodes: parentRow, tree: $component, idx: function(){return 0;}, characters: characters }"',
                 '          class="scroll-row"',
                 '          style="margin-left:0%"',
                 '          data-bind="event: { wheel: scrollRow.bind(null, parentRow) }"',
                 '></edit-row>',
 
-                '<edit-row params="{ nodes: mainRow, tree: $component, idx: function(){ return 1;} }"',
+                '<edit-row params="{ nodes: mainRow, tree: $component, idx: function(){ return 1;}, characters: characters }"',
                 '          class="scroll-row"',
                 '          style="margin-left:20%; width: 60%;"',
                 '          data-bind="event: { wheel: scrollRow.bind(null, mainRow) }"',
                 '></edit-row>',
 
-                '<tag-row params="{ nodes: tagsRow, tree: $component, idx: function(){ return 2;} }"',
+                '<tag-row params="{ nodes: tagsRow, tree: $component, idx: function(){ return 2;}, characters: characters }"',
                 '         style="margin-left:80%"',
                 '         data-bind="event: { wheel: scrollRow.bind(null, tagsRow) }"',
                 '         class="scroll-row"',
@@ -332,10 +363,12 @@ define([
             var $element = $(componentInfo.element);
             var $wrap = $element.find('.wrap');
             var vm = {
+                tree: tree,
                 element: $element,
                 nodes: [],
                 nodeInfos: params.nodes,
                 scrollTo: function (scrollTo) {
+                    this.scrollToInfo = scrollTo;
                     $wrap.css('margin-top', scrollTo);
                 },
                 scrollBy: function (scrollBy) {
@@ -359,14 +392,31 @@ define([
                 scroll: function (vm, e) {
                     e.preventDefault();
                     e.stopPropagation();
-                    var delta = -1 * e.originalEvent.deltaY
+                    var delta = -1 * e.originalEvent.deltaY;
                     this.scrollBy(delta);
                     var activeNode = tree.activeNode();
                     if (activeNode) {
                         activeNode.vm.scrollAlign(delta);
                     }
+                },
+                moveUpNode: function (node) {
+                    //
+                    var nodeInfos = this.tree.rows()[this.idx()];
+                    var nodes = nodeInfos.peek();
+                    var index = nodes.indexOf(node);
+
+                    nodeInfos.valueWillMutate();
+                    nodes.splice(index, 1);
+                    nodes.splice(index - 1, 0, node);
+                    nodeInfos.valueHasMutated();
                 }
             };
+
+            if (params.nodes.vm) {
+                var oldVM = params.nodes.vm;
+                vm.scrollTo(oldVM.scrollToInfo || 0);
+            }
+
             params.nodes.vm = vm;
 
             return vm;
@@ -378,7 +428,8 @@ define([
             template: [
                 '<div class="wrap" data-bind="foreach: {data: nodeInfos, as: \'node\'}">',
                 '    <scroll-node params="{row: $component, node: node, idx: $index }"',
-                '                 data-bind="click: $component.activeNode"',
+                '                 data-bind="click: $component.activeNode,',
+                '                            css: { active: node.isActive}"',
                 '    ></scroll-node>',
                 '</div>',
             ].join('')
@@ -389,9 +440,11 @@ define([
                 createViewModel: createRowVM
             },
             template: [
+
                 '<div class="wrap" data-bind="foreach: {data: nodeInfos, as: \'node\'}">',
                 '    <edit-node params="{row: $component, node: node, idx: $index }"',
-                '               data-bind="click: $component.activeNode"',
+                '               data-bind="click: $component.activeNode,',
+                '                          css: { active: node.isActive}"',
                 '               class="scroll-node"',
                 '    ></edit-node>',
                 '</div>',
@@ -400,11 +453,81 @@ define([
 
         ko.components.register('tag-row', {
             viewModel: {
-                createViewModel: createRowVM
+                createViewModel: function (params, componentInfo) {
+                    var rowVM = createRowVM(params, componentInfo);
+
+                    rowVM.characters = params.characters;
+                    rowVM.selectableCharacters = ko.computed(function () {
+                        var activeNode = rowVM.tree.activeNode();
+                        if (!activeNode) {
+                            return [];
+                        }
+                        var characters = ko.unwrap(params.characters);
+
+                        var ret = [];
+                        characters.forEach(function (character) {
+                            if (activeNode.characters.indexOf(character) === -1) {
+                                ret.push(character);
+                            }
+                        });
+                        return ret;
+                    });
+                    rowVM.selectCharacter = ko.observable(false);
+                    rowVM.setCharacter = function (character) {
+                        if (character) {
+                            var activeNode = rowVM.tree.activeNode();
+                            if (activeNode && activeNode.characters.indexOf(character) === -1) {
+                                activeNode.characters.push(character);
+                            }
+                        }
+                        rowVM.selectCharacter(false);
+                    };
+                    rowVM.removeCharacter = function (character) {
+                        var activeNode = rowVM.tree.activeNode();
+                        if (activeNode) {
+                            activeNode.characters.remove(character);
+                        }
+                    };
+                    rowVM.tree.activeNode.subscribe(function () {
+                        rowVM.scrollTo(0);
+                    });
+
+                    rowVM.displayMod = ko.observable('nameOnly');
+
+                    return rowVM;
+                }
             },
             template: [
-                '<div class="wrap" data-bind="foreach: {data: nodeInfos, as: \'node\'}">',
-                '    <tag-node params="{row: $component, node: node, idx: $index }"></tag-node>',
+                '<div class="wrap">',
+                '    <div class="dropdown" data-bind="visible: tree.activeNode, css:{ open: selectCharacter}">',
+                '        <button type="button" ',
+                '                class="btn btn-default"',
+                '                data-toggle="dropdown" data-bind="click: function(){ selectCharacter(true); }">',
+                '            add character',
+                '            <span class="caret"></span>',
+                '        </button>',
+                '        <ul class="dropdown-menu" aria-labelledby="dLabel" >',
+                '            <!-- ko foreach: {data: selectableCharacters, as: \'character\'} -->',
+                '            <li data-bind="click: $component.setCharacter">',
+                '                <a data-bind="text: character.name" href="#"></a>',
+                '            </li>',
+                '            <!-- /ko -->',
+                '            <li data-bind="click: setCharacter">',
+                '                <a href="#"><i class="glyphicon glyphicon-remove"></i>取消</a>',
+                '            </li>',
+                '        </ul>',
+                '    </div>',
+                '    <!-- ko if: tree.activeNode -->',
+                '    <div data-bind="foreach: {data: tree.activeNode().characters, as: \'node\'}">',
+                '        <div class="bs-callout bs-callout-normal" >',
+                '            <h4>',
+                '                <span data-bind="text:node.name"></span>',
+                '                <i data-bind="click: $component.removeCharacter" class="glyphicon glyphicon-remove"></i>',
+                '            </h4>',
+                '            <p data-bind="text:node.desc"></p>',
+                '        </div>',
+                '    </div>',
+                '    <!-- /ko -->',
                 '</div>',
             ].join('')
         });
@@ -420,31 +543,12 @@ define([
                     return this.node.parent.childNodes.indexOf(this.node);
                 },
                 row: row,
-                children: [],
                 element: $(componentInfo.element),
-                dispose: function () {
-                    if (this.parent) {
-                        this.parent.children.splice(this.parent.children.indexOf(this), 1);
-                    }
-                    this.disposed = true;
-                }
             };
             var oldVm = originNode.vm;
             originNode.vm = vm;
-            if (oldVm && oldVm.children) {
-                oldVm.children.forEach(function (node) {
-                    var index = originNode.childNodes.indexOf(node.node);
-                    vm.children[index] = node;
-                });
-            }
 
             row.nodes[vm.idx()] = vm;
-            if (originNode.parent) {
-                var childNodeIdx = originNode.parent.childNodes.indexOf(originNode);
-                if (originNode.parent.vm) {
-                    originNode.parent.vm.children[childNodeIdx] = vm;
-                }
-            }
             vm.top = function () {
                 var siblings = this.row.nodes;
                 var prevSiblings = siblings.slice(0, this.idx());
@@ -541,7 +645,7 @@ define([
                         siblingLastChild.tryBottomAlignTo(vCenter, 0, true);
                     } else {
                         sibling = subTreeRoot.nextSibling();
-                        if (sibling && sibling.children.length) {
+                        if (sibling && sibling.node.childNodes.length) {
                             sibling.firstChild().tryTopAlignTo(vCenter, 0, true);
                         }
                     }
@@ -559,12 +663,17 @@ define([
             vm.screenLeft = function () {
                 return this.row.scrollLeft() - containerLeft();
             };
+            vm.children = function () {
+                return this.node.childNodes.map(function (node) {
+                    return node.vm;
+                });
+            }
             vm.lastChild = function () {
-                return this.children.filter(Boolean).slice(-1)[0];
+                return this.children().filter(Boolean).slice(-1)[0];
             };
             vm.firstChild = function () {
-                return this.children.filter(Boolean)[0];
-            }
+                return this.children().filter(Boolean)[0];
+            };
 
             vm.scrollAlign = function (delta) {
                 var screenTop = this.screenTop();
@@ -586,18 +695,19 @@ define([
                         parent.tryBottomAlignTo(screenBottom, 1);
                     });
 
-                    if (this.children.length) {
+                    if (this.children().length) {
                         this.firstChild().tryTopAlignTo(this.screenTop(), 1);
                     }
                 }
             };
             vm.allParents = function (callback) {
-                var parent = this.parent;
-                while (parent && parent.element) {
-                    callback(parent);
+                var parent = this.node.parent;
+                while (parent && parent.vm && parent.vm.element) {
+                    callback(parent.vm);
                     parent = parent.parent;
                 }
-            }
+            };
+
             vm.siblings = function () {
                 return this.node.parent.childNodes.map(function (node) {
                     return node.vm;
@@ -636,12 +746,30 @@ define([
                         break;
                     }
                 }
-                var newNode = this.row.addChildNode(this.node, idx, this.children.length);
+                var newNode = this.row.addChildNode(this.node, idx, this.children().length);
                 setTimeout(function () {
                     newNode.vm.centery();
                     self.row.activeNode(newNode);
                 });
-            }
+            };
+
+            vm.moveUp = function (vm, e) {
+
+                if (this.prevSibling()) {
+                    var siblingNodes = this.node.parent.childNodes;
+                    var index = siblingNodes.indexOf(this.node);
+                    siblingNodes.splice(index, 1);
+                    siblingNodes.splice(index - 1, 0, this.node);
+
+                    this.row.moveUpNode(this.node);
+
+                    this.centery();
+                }
+            };
+            vm.removeNode = function () {
+                this.node.removed = true;
+            };
+
             return vm;
         }
 
@@ -652,6 +780,19 @@ define([
             template: [
                 '<div class="content" data-bind="click: centery">',
                 '<editable-text params="value: node.content"></editable-text>',
+
+                '<div class="btn-toolbar">',
+                '    <div class="btn-group">',
+                '        <span data-bind="text: node.childNodes.length"></span>',
+                '    </div>',
+                '    <div class="btn-group">',
+                '        <button type="button" class="btn btn-default" data-bind="click:moveUp">move up</button>',
+                '    </div>',
+                '    <div class="btn-group">',
+                '        <button type="button" class="btn btn-default" data-bind="click:removeNode">remove</button>',
+                '    </div>',
+                '</div>',
+
                 '</div>',
                 '<div class="add_sibling" data-bind="click: appendSibling"> + </div>',
                 '<div class="add_child" data-bind="click: addChild"> + </div>',
@@ -700,12 +841,12 @@ define([
                     nodeVM.addChild = function () {
                         var self = this;
                         if (this.row.idx() == 1) {
-                            var newNode = this.row.addChildNode(this.node, this.idx(), this.children.length);
+                            var newNode = this.row.addChildNode(this.node, this.idx(), this.children().length);
                         } else if (this.row.idx() == 0) {
                             // so we need caculate idx here;
                             // try find the last child
                             var lastChild = findLastVisibleNode(this.node).vm;
-                            var newNode = this.row.addChildNode(this.node, lastChild.idx() + 1, this.children.length);
+                            var newNode = this.row.addChildNode(this.node, lastChild.idx() + 1, this.children().length);
                         } else {
                             throw new Error('unexpected row idx');
                         }

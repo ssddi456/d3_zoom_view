@@ -1,7 +1,9 @@
 require([
+    './entities/story',
     'ko',
     './components/index'
 ], function (
+    story,
     ko
 ) {
 
@@ -31,6 +33,7 @@ require([
         }
         var storyPrefix = 'myNoval_';
         var characterPrefix = 'myNovalCharacter_';
+        var configPrefix = 'myNovalConfig_';
 
         var vm = {
             viewType: ko.observable('editView'),
@@ -40,33 +43,6 @@ require([
             characters: ko.observable([]),
 
             save: function () {
-                var nodes = this.tree().childNodes.slice();
-                nodes.forEach(function (node, idx) {
-                    node.idx = idx;
-                });
-                while (nodes.length) {
-                    var currentNode = nodes.shift();
-                    var content = ko.unwrap(currentNode.content);
-
-                    if (!currentNode.id) {
-                        currentNode.id = UUID();
-                    }
-
-                    localStorage.setItem(storyPrefix + currentNode.id,
-                        JSON.stringify({
-                            content: content,
-                            id: currentNode.id,
-                            parentId: currentNode.parentId,
-                            idx: currentNode.idx,
-                        }));
-                    if (currentNode.childNodes && currentNode.childNodes.length) {
-                        currentNode.childNodes.forEach(function (node, idx) {
-                            node.parentId = currentNode.id;
-                            node.idx = idx;
-                            nodes.push(node);
-                        });
-                    }
-                }
                 // so i should implements the characters save/load
                 var characters = this.characters();
                 characters.forEach(function (character, idx) {
@@ -80,7 +56,35 @@ require([
                             name: ko.unwrap(character.name),
                             desc: ko.unwrap(character.desc)
                         }));
-                })
+                });
+
+                var nodes = this.tree().childNodes.slice();
+                nodes.forEach(function (node, idx) {
+                    node.idx = idx;
+                });
+                while (nodes.length) {
+                    var currentNode = nodes.shift();
+
+                    if (!currentNode.id) {
+                        currentNode.id = UUID();
+                    }
+
+                    localStorage.setItem(storyPrefix + currentNode.id,
+                        JSON.stringify(story.getJSON(currentNode)));
+                    if (currentNode.childNodes && currentNode.childNodes.length) {
+                        currentNode.childNodes.forEach(function (node, idx) {
+                            node.parentId = currentNode.id;
+                            node.idx = idx;
+                            nodes.push(node);
+                        });
+                    }
+                }
+
+                var config = {
+                    viewType: this.viewType(),
+                    tab: this.tab(),
+                };
+                localStorage.setItem(configPrefix, JSON.stringify(config));
             },
             load: function () {
                 var map = {};
@@ -88,29 +92,54 @@ require([
                     childNodes: []
                 };
                 var characters = [];
+                var config;
+
                 Object.keys(localStorage).forEach(function (key) {
                     if (key.indexOf(storyPrefix) === 0) {
                         var node = JSON.parse(localStorage.getItem(key));
-                        node.childNodes = [];
-                        map[node.id] = node;
+                        if (!node.removed) {
+                            node.childNodes = [];
+                            map[node.id] = node;
+                        } else {
+                            // dead nodes
+                            // console.log( node );
+                        }
                     } else if (key.indexOf(characterPrefix) === 0) {
                         var node = JSON.parse(localStorage.getItem(key));
-                        if(node.idx){
-                            characters[node.idx] = node;
-                        } else {
-                            characters.push(node);
+                        if (!node.removed) {
+                            if (node.idx != undefined) {
+                                characters[node.idx] = node;
+                            } else {
+                                characters.push(node);
+                            }
                         }
+                    } else if (key.indexOf(configPrefix) === 0) {
+                        config = JSON.parse(localStorage.getItem(key));
                     }
                 });
+
+                if (config) {
+                    this.tab(config.tab);
+                    this.viewType(config.viewType);
+                }
 
                 Object.keys(map).forEach(function (key) {
                     var node = map[key];
                     var parentId = node.parentId;
-                    if (parentId) {
-                        map[parentId].childNodes[node.idx] = node;
+                    if (parentId != undefined) {
+                        parent = map[parentId];
                     } else {
-                        newTree.childNodes[node.idx] = node;
+                        parent = newTree;
                     }
+                    if (node.idx != undefined) {
+                        parent.childNodes[node.idx] = node;
+                    } else {
+                        parent.childNodes.push(node);
+                    }
+                });
+                newTree.childNodes = newTree.childNodes.filter(Boolean);
+                Object.keys(map).forEach(function (key) {
+                    map[key].childNodes = map[key].childNodes.filter(Boolean);
                 });
 
                 this.tree(newTree);

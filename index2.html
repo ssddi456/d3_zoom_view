@@ -47,16 +47,16 @@
         </div>
     </nav>
 
-    <div style="position:absolute;top:70px;bottom:0px;">
-        <div class="container-fluild"  data-bind="if: tab() == 'story'">
+    <div style="position:absolute;top:70px;bottom:0px;left:15px;right:15px;">
+        <div class="container-fluid"  data-bind="if: tab() == 'story'">
             <!-- ko if: viewType() == 'scrollView' -->
-            <scroll-tree params="tree: tree"></scroll-tree>
+            <scroll-tree params="tree: tree, characters: characters"></scroll-tree>
             <!-- /ko -->
             <!-- ko if: viewType() == 'editView' -->
-            <edit-tree params="tree: tree"></edit-tree>
+            <edit-tree params="tree: tree,  characters: characters"></edit-tree>
             <!-- /ko -->
         </div>
-        <div class="container-fluild" style="height:100%" data-bind="if: tab() == 'character'">
+        <div class="container-fluid" style="height:100%" data-bind="if: tab() == 'character'">
             <characters params="characters: characters"></characters>
         </div>
     </div>

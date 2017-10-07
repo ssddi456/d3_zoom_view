@@ -10,6 +10,9 @@ define([
                     var vm = {
                         characters: ko.observableArray([]),
                         filterWord: ko.observable(''),
+                        clearFilter: function () {
+                            this.filterWord('');
+                        },
                         filtedCharacters: ko.pureComputed(function () {
                             var filterWord = vm.filterWord();
                             var characters = vm.characters();
@@ -68,6 +71,7 @@ define([
                 '    <div class="col-md-2">',
                 '        <div class="input-group">',
                 '            <input type="text" class="form-control" data-bind="value:filterWord">',
+                '            <div class="input-group-addon"><i class="glyphicon glyphicon-remove" data-bind="click: clearFilter"></i></div>',
                 '            <div class="input-group-addon"><i class="glyphicon glyphicon-search"></i></div>',
                 '        </div>',
                 '    </div>',
@@ -79,7 +83,7 @@ define([
                 '        </div>',
                 '    </div>',
                 '</div>',
-                '<div class="row" style="position:absolute; top:34px; bottom: 0px; left:15px;right:15px;">',
+                '<div class="row" style="position:absolute; top:34px; bottom: 0px; left:0;right:0;">',
                 '    <div class="col-md-2" style="position:absolute; top: 0px; bottom: 0px; overflow:auto;">',
                 '        <div data-bind="foreach: {data:filtedCharacters, as:\'character\'}">',
                 '            <div class="bs-callout bs-callout-normal" >',
@@ -123,7 +127,14 @@ define([
                 '<h4>',
                 '    <editable-text params="value: name, type: \'input\'"></editable-text>',
                 '</h4>',
+                
                 '<editable-text params="value: desc"></editable-text>',
             ].join('')
         });
+
+        ko.components.register('static-character-card', {
+            template: [
+
+            ].join('')
+        })
     });

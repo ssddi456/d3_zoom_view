@@ -15,6 +15,9 @@ html{
     margin-top: 0;
     margin-bottom: 5px;
   }
+  .bs-callout p{
+    white-space: pre-wrap;
+  }
   .bs-callout p:last-child {
     margin-bottom: 0;
   }

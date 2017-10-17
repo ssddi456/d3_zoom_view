@@ -1,28 +1,34 @@
 require([
     './entities/story',
+    './lib/download',
     'ko',
     './components/index'
 ], function (
     story,
+    download,
     ko
 ) {
+        function get_tree() {
+            return {
+                childNodes: [{
+                    childNodes: [
+                        {
+                            content: '起',
+                        },
+                        {
+                            content: '承',
+                        },
+                        {
+                            content: '转',
+                        },
+                        {
+                            content: '合',
+                        },
+                    ]
+                }]
+            };
+        }
 
-        var tree = {
-            childNodes: [
-                {
-                    content: '起',
-                },
-                {
-                    content: '承',
-                },
-                {
-                    content: '转',
-                },
-                {
-                    content: '合',
-                },
-            ]
-        };
         var keyMap = '1237654890qwertypoiuasdflkjhgzxcmnbv';
         function UUID() {
             var ret = '';
@@ -31,6 +37,7 @@ require([
             }
             return ret;
         }
+
         var storyPrefix = 'myNoval_';
         var characterPrefix = 'myNovalCharacter_';
         var configPrefix = 'myNovalConfig_';
@@ -39,7 +46,26 @@ require([
             viewType: ko.observable('editView'),
             tab: ko.observable('character'),
 
+            trees: ko.observable(),
             tree: ko.observable(),
+            addTree: function () {
+                var new_tree = get_tree();
+                this.trees().push(new_tree);
+                this.tree(new_tree);
+            },
+            exports: function () {
+                var json = {};
+                this.save();
+                Object.keys(localStorage).forEach(function (key) {
+                    if (key.indexOf(storyPrefix) === 0
+                        || key.indexOf(characterPrefix) === 0
+                        || key.indexOf(configPrefix) === 0
+                    ) {
+                        json[key] = localStorage.getItem(key);
+                    }
+                });
+                download(json, 'your_story.json');
+            },
             characters: ko.observable([]),
 
             save: function () {
@@ -58,7 +84,7 @@ require([
                         }));
                 });
 
-                var nodes = this.tree().childNodes.slice();
+                var nodes = this.trees().childNodes.slice();
                 nodes.forEach(function (node, idx) {
                     node.idx = idx;
                 });
@@ -142,14 +168,17 @@ require([
                     map[key].childNodes = map[key].childNodes.filter(Boolean);
                 });
 
-                this.tree(newTree);
+                this.trees(newTree);
                 this.characters(characters);
                 return newTree;
             }
         };
 
-        if (!vm.load().childNodes.length) {
-            vm.tree(tree);
+        var trees = vm.load();
+        if (trees.childNodes.length) {
+            vm.tree(trees.childNodes[0]);
+        } else {
+            vm.addTree();
         }
 
         window.onbeforeunload = function () {

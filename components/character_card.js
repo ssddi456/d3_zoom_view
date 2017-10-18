@@ -69,7 +69,7 @@ define([
             template: [
                 '<div class="row">',
                 '    <div class="col-md-2">',
-                '        <div class="input-group">',
+                '        <div class="input-group" data-bind="visible: characters().length > 3">',
                 '            <input type="text" class="form-control" data-bind="value:filterWord">',
                 '            <div class="input-group-addon"><i class="glyphicon glyphicon-remove" data-bind="click: clearFilter"></i></div>',
                 '            <div class="input-group-addon"><i class="glyphicon glyphicon-search"></i></div>',

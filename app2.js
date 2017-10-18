@@ -10,22 +10,12 @@ require([
 ) {
         function get_tree() {
             return {
-                childNodes: [{
-                    childNodes: [
-                        {
-                            content: '起',
-                        },
-                        {
-                            content: '承',
-                        },
-                        {
-                            content: '转',
-                        },
-                        {
-                            content: '合',
-                        },
-                    ]
-                }]
+                childNodes: [
+                    { content: '起', childNodes: [] },
+                    { content: '承', childNodes: [] },
+                    { content: '转', childNodes: [] },
+                    { content: '合', childNodes: [] },
+                ]
             };
         }
 
@@ -50,7 +40,7 @@ require([
             tree: ko.observable(),
             addTree: function () {
                 var new_tree = get_tree();
-                this.trees().push(new_tree);
+                this.trees().childNodes.push(new_tree);
                 this.tree(new_tree);
             },
             exports: function () {

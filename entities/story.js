@@ -55,7 +55,7 @@ define([
                 content: ko.unwrap(story.content),
                 isActive: !!ko.unwrap(story.isActive),
                 hasFocus: !!ko.unwrap(story.hasFocus),
-                characters: ko.unwrap(story.characters).map(function (character) {
+                characters: ko.unwrap(story.characters || []).map(function (character) {
                     return character && character.id;
                 }).filter(Boolean),
             };

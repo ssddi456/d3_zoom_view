@@ -79,7 +79,7 @@ define([
                             while (currentLevel && currentLevel.length) {
                                 for (var i = 0; i < currentLevel.length; i++) {
                                     var nodeInfo = currentLevel[i];
-                                    if (nodeInfo.hasFocus) {
+                                    if (ko.unwrap(nodeInfo.hasFocus)) {
                                         shouldFocusOn = nodeInfo;
                                     }
                                     story.load(nodeInfo, nodeInfo.parent || tree, characters);
@@ -303,22 +303,27 @@ define([
                         if (newVal) {
                             newVal.isActive(true);
                             newVal.hasFocus(true);
-                            newVal.parent.isActive(true);
 
-                            var parent = newVal.parent;
+                            if (ko.isObservable(newVal.parent.isActive)) {
+                                newVal.parent.isActive(true);
 
-                            if (parent != vm.parentRow()[0]) {
-                                vm.parentRow.splice(0, 1, newVal.parent);
-                                // make a patch here to make scroll property;
-                                setTimeout(function () {
-                                    var parentVM = newVal.parent.vm;
-                                    newVal.vm.parent = parentVM;
-                                    parentVM.tryTopAlignTo(newVal.vm.screenTop(), 1, true);
-                                });
+                                var parent = newVal.parent;
+
+                                if (parent != vm.parentRow()[0]) {
+                                    vm.parentRow.splice(0, 1, newVal.parent);
+                                    // make a patch here to make scroll property;
+                                    setTimeout(function () {
+                                        var parentVM = newVal.parent.vm;
+                                        newVal.vm.parent = parentVM;
+                                        parentVM.tryTopAlignTo(newVal.vm.screenTop(), 1, true);
+                                    });
+                                } else {
+                                    setTimeout(function () {
+                                        newVal.parent.vm.tryTopAlignTo(newVal.vm.screenTop(), 1, true);
+                                    })
+                                }
                             } else {
-                                setTimeout(function () {
-                                    newVal.parent.vm.tryTopAlignTo(newVal.vm.screenTop(), 1, true);
-                                })
+                                vm.parentRow([]);
                             }
 
                             if (newVal.tags) {

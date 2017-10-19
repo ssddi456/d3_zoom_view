@@ -1,15 +1,20 @@
 require([
     './entities/story',
+    './entities/character',
+    './entities/tag',
     './lib/download',
     'ko',
     './components/index'
 ], function (
     story,
+    character,
+    tag,
     download,
     ko
 ) {
         function get_tree() {
             return {
+                content: '新的故事',
                 childNodes: [
                     { content: '起', childNodes: [] },
                     { content: '承', childNodes: [] },
@@ -19,36 +24,46 @@ require([
             };
         }
 
-        var keyMap = '1237654890qwertypoiuasdflkjhgzxcmnbv';
-        function UUID() {
-            var ret = '';
-            for (var i = 0; i < 16; i++) {
-                ret += keyMap[Math.floor(Math.random() * keyMap.length)];
-            }
-            return ret;
-        }
-
         var storyPrefix = 'myNoval_';
         var characterPrefix = 'myNovalCharacter_';
+        var tagPrefix = 'myNovalTag_';
         var configPrefix = 'myNovalConfig_';
 
         var vm = {
+            tab: ko.observable('character'), // story, tag
             viewType: ko.observable('editView'),
-            tab: ko.observable('character'),
+
 
             trees: ko.observable(),
             tree: ko.observable(),
+
             addTree: function () {
                 var new_tree = get_tree();
-                this.trees().childNodes.push(new_tree);
+                this.trees.valueWillMutate();
+                this.trees.peek().childNodes.push(new_tree);
+                this.trees.valueHasMutated();
                 this.tree(new_tree);
             },
+
+            changeTree: function (tree) {
+                if (tree) {
+                    this.tree(tree);
+                }
+                this.selectTree(false);
+            },
+
+
+            characters: ko.observable([]),
+            tags: ko.observable([]),
+            snippets: ko.observable([]),
+
             exports: function () {
                 var json = {};
                 this.save();
                 Object.keys(localStorage).forEach(function (key) {
                     if (key.indexOf(storyPrefix) === 0
                         || key.indexOf(characterPrefix) === 0
+                        || key.indexOf(tagPrefix) === 0
                         || key.indexOf(configPrefix) === 0
                     ) {
                         json[key] = localStorage.getItem(key);
@@ -56,37 +71,43 @@ require([
                 });
                 download(json, 'your_story.json');
             },
-            characters: ko.observable([]),
 
             save: function () {
                 // so i should implements the characters save/load
                 var characters = this.characters();
-                characters.forEach(function (character, idx) {
-                    if (!character.id) {
-                        character.id = UUID();
-                    }
-                    localStorage.setItem(characterPrefix + character.id,
-                        JSON.stringify({
-                            id: character.id,
-                            idx: idx,
-                            name: ko.unwrap(character.name),
-                            desc: ko.unwrap(character.desc)
-                        }));
+                characters.forEach(function (_character, idx) {
+                    _character.idx = idx;
+                    localStorage.setItem(characterPrefix + _character.id,
+                        JSON.stringify(character.getJSON(_character)));
+                });
+
+                var tags = this.tags();
+                tags.forEach(function (_tag, idx) {
+                    _tag.idx = idx;
+                    localStorage.setItem(tagPrefix + _tag.id,
+                        JSON.stringify(character.getJSON(_tag)));
+                });
+
+                var snippets = this.snippets();
+                snippets.forEach(function (snippet, idx) {
+                    snippet.idx = idx;
+                    snippet.parentId = 'snippets';
+                    localStorage.setItem(storyPrefix + snippet.id,
+                        JSON.stringify(story.getJSON(snippet)));
                 });
 
                 var nodes = this.trees().childNodes.slice();
                 nodes.forEach(function (node, idx) {
                     node.idx = idx;
+                    localStorage.setItem(storyPrefix + currentNode.id,
+                        JSON.stringify(story.getJSON(currentNode)));
                 });
                 while (nodes.length) {
                     var currentNode = nodes.shift();
 
-                    if (!currentNode.id) {
-                        currentNode.id = UUID();
-                    }
-
                     localStorage.setItem(storyPrefix + currentNode.id,
                         JSON.stringify(story.getJSON(currentNode)));
+
                     if (currentNode.childNodes && currentNode.childNodes.length) {
                         currentNode.childNodes.forEach(function (node, idx) {
                             node.parentId = currentNode.id;
@@ -104,10 +125,17 @@ require([
             },
             load: function () {
                 var map = {};
+
                 var newTree = {
                     childNodes: []
                 };
+
                 var characters = [];
+
+                var tags = [];
+
+                var snippets = [];
+
                 var config;
 
                 Object.keys(localStorage).forEach(function (key) {
@@ -122,11 +150,22 @@ require([
                         }
                     } else if (key.indexOf(characterPrefix) === 0) {
                         var node = JSON.parse(localStorage.getItem(key));
+                        character.load(node);
                         if (!node.removed) {
                             if (node.idx != undefined) {
                                 characters[node.idx] = node;
                             } else {
                                 characters.push(node);
+                            }
+                        }
+                    } else if (key.indexOf(tagPrefix) === 0) {
+                        var node = JSON.parse(localStorage.getItem(key));
+                        tag.load(node);
+                        if (!node.removed) {
+                            if (node.idx != undefined) {
+                                tags[node.idx] = node;
+                            } else {
+                                tags.push(node);
                             }
                         }
                     } else if (key.indexOf(configPrefix) === 0) {
@@ -142,15 +181,21 @@ require([
                 Object.keys(map).forEach(function (key) {
                     var node = map[key];
                     var parentId = node.parentId;
+                    var parentArray;
+
                     if (parentId != undefined) {
-                        parent = map[parentId];
+                        if(parentId == 'snippets'){
+                            parentArray = snippets;
+                        } else {
+                            parentArray = map[parentId].childNodes;
+                        }
                     } else {
-                        parent = newTree;
+                        parentArray = newTree.childNodes;
                     }
                     if (node.idx != undefined) {
-                        parent.childNodes[node.idx] = node;
+                        parentArray[node.idx] = node;
                     } else {
-                        parent.childNodes.push(node);
+                        parentArray.push(node);
                     }
                 });
                 newTree.childNodes = newTree.childNodes.filter(Boolean);
@@ -158,11 +203,24 @@ require([
                     map[key].childNodes = map[key].childNodes.filter(Boolean);
                 });
 
+                characters = characters.filter(Boolean);
+                tags = tags.filter(Boolean);
+                snippets = snippets.filter(Boolean);
+
                 this.trees(newTree);
                 this.characters(characters);
+                this.tags(tags);
+                this.snippets(snippets);
+
                 return newTree;
             }
         };
+
+        vm.tree.subscribe(function (tree) {
+            if (tree) {
+                tree.content = ko.observable(ko.unwrap(tree.content));
+            }
+        });
 
         var trees = vm.load();
         if (trees.childNodes.length) {

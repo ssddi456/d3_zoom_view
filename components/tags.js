@@ -1,29 +1,29 @@
 define([
-    '../entities/character',
+    '../entities/tag',
     'ko',
 ], function (
-    character,
+    tag,
     ko
 ) {
 
-        ko.components.register('characters', {
+        ko.components.register('tags', {
             viewModel: {
                 createViewModel: function (params, componentInfo) {
                     var vm = {
-                        characters: ko.observableArray([]),
+                        tags: ko.observableArray([]),
                         filterWord: ko.observable(''),
                         clearFilter: function () {
                             this.filterWord('');
                         },
-                        filtedCharacters: ko.pureComputed(function () {
+                        filtedTags: ko.pureComputed(function () {
                             var filterWord = vm.filterWord();
-                            var characters = vm.characters();
+                            var tags = vm.tags();
                             if (!filterWord) {
-                                return characters;
+                                return tags;
                             }
-                            return characters.filter(function (character) {
-                               var name = character.name();
-                               var desc = character.desc();
+                            return tags.filter(function (tag) {
+                               var name = tag.name();
+                               var desc = tag.desc();
                                if(name.indexOf(filterWord) != -1) {
                                    return true;
                                }
@@ -32,40 +32,42 @@ define([
                                }
                             });
                         }),
-                        addCharacter: function () {
-                            this.characters.push(character());
+                        addTag: function () {
+                            this.tags.push(tag());
                         },
-                        copyCharacter: function (_character, idx) {
-                            var newCharacter = character();
+                        copyTag: function (_tag, idx) {
+                            var newTag = tag();
 
-                            newCharacter.name(ko.unwrap(_character.name));
-                            newCharacter.desc(ko.unwrap(_character.desc));
-                            
-                            this.characters.splice(idx, 0, newCharacter);
+                            newTag.name(ko.unwrap(_tag.name)),
+                            newTag.desc(ko.unwrap(_tag.desc)),
+
+                            this.tags.splice(idx, 0, newTag);
                         },
-                        removeCharacter: function (character) {
-                            this.characters.remove(character);
+                        removeTag: function (tag) {
+                            this.tags.remove(tag);
                         },
-                        init: function (characters) {
-                            characters.forEach(character.load);
-                            this.characters(characters);
+                        init: function (tags) {
+                            tags.forEach(function (_tag) {
+                                tag.load(_tag);
+                            });
+                            this.tags(tags);
                         }
                     };
 
-                    if (params.characters && params.characters.subscribe) {
-                        params.characters.subscribe(function (newVal) {
+                    if (params.tags && params.tags.subscribe) {
+                        params.tags.subscribe(function (newVal) {
                             vm.init(newVal);
                         });
                     }
 
-                    vm.init(ko.unwrap(params.characters));
+                    vm.init(ko.unwrap(params.tags));
                     return vm;
                 }
             },
             template: [
                 '<div class="row">',
                 '    <div class="col-md-2">',
-                '        <div class="input-group" data-bind="visible: characters().length > 3">',
+                '        <div class="input-group" data-bind="visible: tags().length > 3">',
                 '            <input type="text" class="form-control" data-bind="value:filterWord">',
                 '            <div class="input-group-addon"><i class="glyphicon glyphicon-remove" data-bind="click: clearFilter"></i></div>',
                 '            <div class="input-group-addon"><i class="glyphicon glyphicon-search"></i></div>',
@@ -74,32 +76,32 @@ define([
                 '    <div class="col-md-10">',
                 '        <div class="btn-toolbar">',
                 '            <div class="btn-group">',
-                '                <button type="button" class="btn btn-default", data-bind="click: addCharacter">add character</button>',
+                '                <button type="button" class="btn btn-default", data-bind="click: addTag">add tag</button>',
                 '            </div>',
                 '        </div>',
                 '    </div>',
                 '</div>',
                 '<div class="row" style="position:absolute; top:34px; bottom: 0px; left:0;right:0;">',
                 '    <div class="col-md-2" style="position:absolute; top: 0px; bottom: 0px; overflow:auto;">',
-                '        <div data-bind="foreach: {data:filtedCharacters, as:\'character\'}">',
+                '        <div data-bind="foreach: {data:filtedTags, as:\'tag\'}">',
                 '            <div class="bs-callout bs-callout-normal" >',
-                '                <h4><a data-bind="text: character.name, attr:{href: \'#character_\' + character.name()}"></a> </h4>',
+                '                <h4><a data-bind="text: tag.name, attr:{href: \'#tag_\' + tag.name()}"></a> </h4>',
                 '            </div>',
                 '        </div>',
                 '    </div>',
                 '    <div class="col-md-10 col-md-offset-2" style="position:absolute; top: 0px; bottom: 0px; overflow:auto;">',
-                '        <div class="character-list" data-bind="foreach: {data:characters, as: \'character\'}" >',
-                '            <div class="bs-callout bs-callout-normal" data-bind="attr: { id: \'character_\' + character.name() }">',
-                '                <character-card params="{name: character.name, desc: character.desc}"></character-card>',
+                '        <div class="tag-list" data-bind="foreach: {data:tags, as: \'tag\'}" >',
+                '            <div class="bs-callout bs-callout-normal" data-bind="attr: { id: \'tag_\' + tag.name() }">',
+                '                <tag-card params="{name: tag.name, desc: tag.desc}"></tag-card>',
                 '                <div class="btn-toolbar">',
                 '                    <div class="btn-group">',
                 '                        <button type="button" class="btn btn-xs btn-default"',
-                '                                data-bind="click: function(){ $component.copyCharacter(character, $index()) }"',
+                '                                data-bind="click: function(){ $component.copyTag(tag, $index()) }"',
                 '                        ><i class="glyphicon glyphicon-duplicate"></i></button>',
                 '                    </div>',
                 '                    <div class="btn-group">',
                 '                        <button type="button" class="btn btn-xs btn-danger"',
-                '                                data-bind="click: function(){ $component.removeCharacter(character) }"',
+                '                                data-bind="click: function(){ $component.removeTag(tag) }"',
                 '                        ><i class="glyphicon glyphicon-floppy-remove"></i></button>',
                 '                    </div>',
                 '                </div>',
@@ -109,7 +111,7 @@ define([
             ].join('')
         })
 
-        ko.components.register('character-card', {
+        ko.components.register('tag-card', {
             viewModel: {
                 createViewModel: function (params, componentInfo) {
                     var vm = {

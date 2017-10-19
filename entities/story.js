@@ -1,14 +1,18 @@
 define([
+    '../lib/uuid',
     'ko',
 ], function (
+    uuid,
     ko
 ) {
         'use strict';
         var story = function (parentNode, childIdx) {
             var newNode = {
+                id: uuid(),
                 content: ko.observable('test'),
                 childNodes: [],
-                characters: ko.observableArray(),
+                characters: ko.observableArray([]),
+                tags: ko.observableArray([]),
                 isActive: ko.observable(false),
                 hasFocus: ko.observable(false),
             };
@@ -22,10 +26,12 @@ define([
             }
             return newNode;
         };
-        story.load = function (story, parent, characters) {
+        story.load = function (story, parent, characters, tags) {
             story.content = ko.observable(ko.unwrap(story.content));
 
             characters = ko.unwrap(characters);
+            tags = ko.unwrap(tags);
+
             var storyCharacters = ko.unwrap(story.characters || []).map(function (character) {
                 if (typeof character == 'string') {
                     for (var i = 0; i < characters.length; i++) {
@@ -38,15 +44,30 @@ define([
                     return character;
                 }
             }).filter(Boolean);
+            var storyTags = ko.unwrap(story.tags || []).map(function (tag) {
+                if (typeof tag == 'string') {
+                    for (var i = 0; i < tags.length; i++) {
+                        if (tags[i].id == tag) {
+                            return tags[i];
+                        }
+                    }
+                    throw new Error('character ' + tag + ' cannot be found.');
+                } else {
+                    return tag;
+                }
+            }).filter(Boolean);
 
             story.characters = ko.observableArray(storyCharacters);
+            story.tags = ko.observableArray(storyTags);
+
             story.parent = parent;
             story.isActive = ko.observable(!!ko.unwrap(story.isActive));
             story.hasFocus = ko.observable(!!ko.unwrap(story.hasFocus));
         };
         story.getJSON = function (story) {
-            console.log( story, ko.unwrap(story.characters) );
-            
+            if (!story.id) {
+                console.error('story miss id', JSON.stringify(story));
+            }
             var ret = {
                 id: story.id,
                 idx: story.idx,
@@ -58,7 +79,11 @@ define([
                 characters: ko.unwrap(story.characters || []).map(function (character) {
                     return character && character.id;
                 }).filter(Boolean),
+                tags: ko.unwrap(story.tags || []).map(function (tag) {
+                    return tag && tag.id;
+                }).filter(Boolean),
             };
+
             return ret;
         }
         return story;

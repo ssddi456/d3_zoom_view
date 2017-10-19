@@ -204,6 +204,11 @@ scroll-node.active editable-text .icon,
 characters, character-card {
     display: block;
 }
-characters {
-    padding:0 20px;
+
+select-menu {
+    display: block;
 }
+select-menu .dropdown .btn{
+    float: initial;
+}
+

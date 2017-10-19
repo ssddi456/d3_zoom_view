@@ -46,9 +46,10 @@ define([
             viewModel: {
                 createViewModel: function (params, componentInfo) {
                     var characters = params.characters;
+                    var tags = params.tags;
+
                     // control scroll here
                     var vm = {
-                        characters: characters,
                         element: $(componentInfo.element),
                         rows: ko.observableArray([]),
                         activeRow: ko.observable(),
@@ -82,7 +83,7 @@ define([
                                     if (ko.unwrap(nodeInfo.hasFocus)) {
                                         shouldFocusOn = nodeInfo;
                                     }
-                                    story.load(nodeInfo, nodeInfo.parent || tree, characters);
+                                    story.load(nodeInfo, nodeInfo.parent || tree, characters, tags);
 
                                     currentRow.push(nodeInfo);
                                     if (nodeInfo.childNodes && nodeInfo.childNodes.length) {
@@ -182,7 +183,7 @@ define([
             },
             template: [
                 '<!-- ko foreach: {data: rows, as: "row"} -->',
-                '<scroll-row params="{ nodes: row, tree: $component, idx: $index, characters: $component.characters }"',
+                '<scroll-row params="{ nodes: row, tree: $component, idx: $index }"',
                 '            data-bind="click:$component.activeRow, ',
                 '                       event: { wheel: $component.scrollRow },',
                 '                       style: { \'margin-left\': $index() * 20 + \'%\' }',
@@ -199,13 +200,18 @@ define([
                     var parentRow = ko.observableArray();
                     var mainRow = ko.observableArray();
                     var tagsRow = ko.observableArray();
+
                     var characters = params.characters;
+                    var tags = params.tags;
 
                     var vm = {
                         parentRow: parentRow,
                         mainRow: mainRow,
                         tagsRow: tagsRow,
-                        characters: params.characters,
+
+                        characters: characters,
+                        tags: tags,
+
                         activeNode: ko.observable(),
                         addNode: function (parentNode, rowIdx, colIdx, childIdx) {
                             /**
@@ -233,7 +239,7 @@ define([
                             while (currentLevel && currentLevel.length) {
                                 var nodeInfo = currentLevel.shift();
 
-                                story.load(nodeInfo, nodeInfo.parent || tree, characters);
+                                story.load(nodeInfo, nodeInfo.parent || tree, characters, tags);
 
                                 if (nodeInfo.childNodes && nodeInfo.childNodes.length) {
                                     for (var j = 0; j < nodeInfo.childNodes.length; j++) {
@@ -326,11 +332,6 @@ define([
                                 vm.parentRow([]);
                             }
 
-                            if (newVal.tags) {
-                                newVal.tags.forEach(function (tag) {
-                                    vm.tagsRow.push(tag);
-                                });
-                            }
                         } else {
                             vm.parentRow([]);
                         }
@@ -342,19 +343,19 @@ define([
                 }
             },
             template: [
-                '<edit-row params="{ nodes: parentRow, tree: $component, idx: function(){return 0;}, characters: characters }"',
+                '<edit-row params="{ nodes: parentRow, tree: $component, idx: function(){return 0;} }"',
                 '          class="scroll-row"',
                 '          style="margin-left:0%"',
                 '          data-bind="event: { wheel: scrollRow.bind(null, parentRow) }"',
                 '></edit-row>',
 
-                '<edit-row params="{ nodes: mainRow, tree: $component, idx: function(){ return 1;}, characters: characters }"',
+                '<edit-row params="{ nodes: mainRow, tree: $component, idx: function(){ return 1;} }"',
                 '          class="scroll-row"',
                 '          style="margin-left:20%; width: 60%;"',
                 '          data-bind="event: { wheel: scrollRow.bind(null, mainRow) }"',
                 '></edit-row>',
 
-                '<tag-row params="{ nodes: tagsRow, tree: $component, idx: function(){ return 2;}, characters: characters }"',
+                '<tag-row params="{ nodes: tagsRow, tree: $component, idx: function(){ return 2;}, characters: characters, tags: tags }"',
                 '         style="margin-left:80%"',
                 '         data-bind="event: { wheel: scrollRow.bind(null, tagsRow) }"',
                 '         class="scroll-row"',
@@ -374,7 +375,7 @@ define([
                 nodeInfos: params.nodes,
                 scrollTo: function (scrollTo) {
                     this.scrollToInfo = scrollTo;
-                    $wrap.css('margin-top', scrollTo);
+                    $wrap.css('margin-top', this.scrollToInfo);
                 },
                 scrollBy: function (scrollBy) {
                     var top = this.scrollTop();
@@ -477,52 +478,65 @@ define([
                         });
                         return ret;
                     });
-                    rowVM.selectCharacter = ko.observable(false);
+
                     rowVM.setCharacter = function (character) {
-                        if (character) {
-                            var activeNode = rowVM.tree.activeNode();
-                            if (activeNode && activeNode.characters.indexOf(character) === -1) {
-                                activeNode.characters.push(character);
-                            }
+                        var activeNode = rowVM.tree.activeNode();
+                        if (activeNode && activeNode.characters.indexOf(character) === -1) {
+                            activeNode.characters.push(character);
                         }
-                        rowVM.selectCharacter(false);
                     };
+
                     rowVM.removeCharacter = function (character) {
                         var activeNode = rowVM.tree.activeNode();
                         if (activeNode) {
                             activeNode.characters.remove(character);
                         }
                     };
+
+                    rowVM.tags = params.tags;
+                    rowVM.selectableTags = ko.computed(function () {
+                        var activeNode = rowVM.tree.activeNode();
+                        if (!activeNode) {
+                            return [];
+                        }
+
+                        var tags = ko.unwrap(params.tags);
+
+                        var ret = [];
+                        tags.forEach(function (tag) {
+                            if (activeNode.tags.indexOf(tag) === -1) {
+                                ret.push(tag);
+                            }
+                        });
+                        return ret;
+                    });
+
+                    rowVM.setTag = function (tag) {
+                        var activeNode = rowVM.tree.activeNode();
+                        if (activeNode && activeNode.tags.indexOf(tag) === -1) {
+                            activeNode.tags.push(tag);
+                        }
+                    };
+
+                    rowVM.removeTag = function (tag) {
+                        var activeNode = rowVM.tree.activeNode();
+                        if (activeNode) {
+                            activeNode.tags.remove(tag);
+                        }
+                    };
+
                     rowVM.tree.activeNode.subscribe(function () {
                         rowVM.scrollTo(0);
                     });
-
-                    rowVM.displayMod = ko.observable('nameOnly');
 
                     return rowVM;
                 }
             },
             template: [
-                '<div class="wrap">',
-                '    <div class="dropdown" data-bind="visible: tree.activeNode, css:{ open: selectCharacter}">',
-                '        <button type="button" ',
-                '                class="btn btn-default"',
-                '                data-toggle="dropdown" data-bind="click: function(){ selectCharacter(true); }">',
-                '            add character',
-                '            <span class="caret"></span>',
-                '        </button>',
-                '        <ul class="dropdown-menu" aria-labelledby="dLabel" >',
-                '            <!-- ko foreach: {data: selectableCharacters, as: \'character\'} -->',
-                '            <li data-bind="click: $component.setCharacter">',
-                '                <a data-bind="text: character.name" href="#"></a>',
-                '            </li>',
-                '            <!-- /ko -->',
-                '            <li data-bind="click: setCharacter">',
-                '                <a href="#"><i class="glyphicon glyphicon-remove"></i>取消</a>',
-                '            </li>',
-                '        </ul>',
-                '    </div>',
-                '    <!-- ko if: tree.activeNode -->',
+                '<div class="wrap" data-bind="if: tree.activeNode">',
+                '    <select-menu',
+                '        params="onSelect: setCharacter, from: selectableCharacters, display: \'name\', label: \'add character\'">',
+                '    </select-menu>',
                 '    <div data-bind="foreach: {data: tree.activeNode().characters, as: \'node\'}">',
                 '        <div class="bs-callout bs-callout-normal" >',
                 '            <h4>',
@@ -532,7 +546,18 @@ define([
                 '            <p data-bind="text:node.desc"></p>',
                 '        </div>',
                 '    </div>',
-                '    <!-- /ko -->',
+                '    <select-menu',
+                '        params="onSelect: setTag, from: selectableTags, display: \'name\', label: \'add tag\'">',
+                '    </select-menu>',
+                '    <div data-bind="foreach: {data: tree.activeNode().tags, as: \'node\'}">',
+                '        <div class="bs-callout bs-callout-normal" >',
+                '            <h4>',
+                '                <span data-bind="text:node.name"></span>',
+                '                <i data-bind="click: $component.removeTag" class="glyphicon glyphicon-remove"></i>',
+                '            </h4>',
+                '            <p data-bind="text:node.desc"></p>',
+                '        </div>',
+                '    </div>',
                 '</div>',
             ].join('')
         });
@@ -624,6 +649,10 @@ define([
             }
 
             vm.centery = function () {
+                if(this.node.hasFocus()){
+                    return;
+                }
+
                 var self = this;
                 setTimeout(function () {
                     var vCenter = containerHeight() / 2;
@@ -881,58 +910,6 @@ define([
                 '<div class="content">',
                 '<editable-text params="value: node.content"></editable-text>',
                 '</div>',
-            ].join('')
-        });
-
-        ko.components.register('editable-text', {
-            viewModel: {
-
-                createViewModel: function (params, componentInfo) {
-                    var $element = $(componentInfo.element);
-                    var vm = {
-                        value: params.value,
-                        type: params.type || 'textarea',
-                        editing: ko.observable(false),
-                        edit: function () {
-                            this.editing(true);
-                        },
-                        endEdit: function () {
-                            this.editing(false);
-                        }
-                    };
-                    vm.editing.subscribe(function (newVal) {
-                        if (newVal) {
-                            setTimeout(function () {
-                                var $textarea = $element.find('textarea, input');
-                                $textarea.focus();
-
-                                if (vm.type == 'textarea') {
-                                    function setHeight() {
-                                        $textarea.height($textarea[0].scrollHeight - parseFloat($textarea.css('padding-top')) - parseFloat($textarea.css('padding-bottom')));
-                                    }
-                                    setHeight();
-                                    $textarea.on('input', setHeight);
-                                }
-                            });
-                        }
-                    });
-                    return vm;
-                },
-            },
-            template: [
-                '<!-- ko if: editing -->',
-                '<!-- ko if: type == \'textarea\' -->',
-                '<textarea data-bind="value: value, event:{blur: endEdit}"></textarea>',
-                '<!-- /ko -->',
-                '<!-- ko if: type == \'input\' -->',
-                '<input type="text" data-bind="value: value, event:{blur: endEdit}"></input>',
-                '<!-- /ko -->',
-                '<!-- /ko -->',
-                '<!-- ko ifnot: editing -->',
-                '<p data-bind="text: value, event:{dblclick: edit}"></p>',
-                '<i class="icon glyphicon glyphicon-edit" data-bind="click: edit"></i>',
-                '<!-- /ko -->',
-                '<div class="clear"></div>',
             ].join('')
         });
 

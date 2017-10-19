@@ -22,6 +22,7 @@
                     <button type="button" class="btn btn-default" data-bind="click: save">save</button>
                     <button type="button" class="btn btn-default" data-bind="click: exports">exports</button>
                 </div>
+
                 <div class="btn-group" data-toggle="buttons">
                     <label class="btn btn-default" data-bind="css:{active: tab() == 'story'}">
                         <input type="radio" name="" data-bind="checked:tab" value="story"/>
@@ -31,8 +32,30 @@
                         <input type="radio" name="" data-bind="checked:tab" value="character"/>
                         characters
                     </label>
+                    <label class="btn btn-default" data-bind="css:{active: tab() == 'tag'}">
+                        <input type="radio" name="" data-bind="checked:tab" value="tag"/>
+                        tags
+                    </label>
+                    <label class="btn btn-default" data-bind="css:{active: tab() == 'snippet'}">
+                        <input type="radio" name="" data-bind="checked:tab" value="snippet"/>
+                        snippets
+                    </label>
                 </div>
+
                 <!-- ko if: tab() == 'story' -->
+                <div class="btn-group">
+                    <editable-text 
+                        class="pull-left" 
+                        style="line-height:34px; padding:0 10px;" 
+                        params="value: tree().content, type: 'input'"></editable-text>
+
+                    <button type="button" class="btn btn-default" data-bind="click: addTree">add story</button>
+
+                    <select-menu class="pull-left" 
+                        params="value: tree, from: trees().childNodes, display: 'content', label: 'other story'">
+                    </select-menu>
+                </div>
+
                 <div class="btn-group" data-toggle="buttons">
                     <label class="btn btn-default" data-bind="css:{active: viewType() == 'scrollView'}">
                         <input type="radio" name="" data-bind="checked:viewType" value="scrollView"/>
@@ -54,11 +77,17 @@
             <scroll-tree params="tree: tree, characters: characters"></scroll-tree>
             <!-- /ko -->
             <!-- ko if: viewType() == 'editView' -->
-            <edit-tree params="tree: tree,  characters: characters"></edit-tree>
+            <edit-tree params="tree: tree,  characters: characters, tags: tags"></edit-tree>
             <!-- /ko -->
         </div>
-        <div class="container-fluid" style="height:100%" data-bind="if: tab() == 'character'">
+        <div class="container-fluid" style="height:100%" data-bind="if: tab() == 'character', visible: tab() == 'character'">
             <characters params="characters: characters"></characters>
+        </div>
+        <div class="container-fluid" style="height:100%" data-bind="if: tab() == 'tag', visible: tab() == 'tag'">
+            <tags params="tags: tags"></tags>
+        </div>
+        <div class="container-fluid" style="height:100%" data-bind="if: tab() == 'snippet', visible: tab() == 'snippet'">
+            <snippets params="snippets: snippets, characters: characters, tags: tags"></snippets>
         </div>
     </div>
         

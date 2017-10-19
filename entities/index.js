@@ -1,9 +1,15 @@
 define([
     './story',
+    './tag',
+    './character',
 ], function(
-    story
+    story,
+    tag,
+    character
 ) {
     return {
-        story: story
+        story: story,
+        character: character,
+        tag: tag
     };
 });

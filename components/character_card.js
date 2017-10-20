@@ -83,7 +83,7 @@ define([
                 '    <div class="col-md-2" style="position:absolute; top: 0px; bottom: 0px; overflow:auto;">',
                 '        <div data-bind="foreach: {data:filtedCharacters, as:\'character\'}">',
                 '            <div class="bs-callout bs-callout-normal" >',
-                '                <h4><a data-bind="text: character.name, attr:{href: \'#character_\' + character.name()}"></a> </h4>',
+                '                <h4><a data-bind="text: character.name, attr:{href: \'#character_\' + character.id}"></a> </h4>',
                 '            </div>',
                 '        </div>',
                 '    </div>',

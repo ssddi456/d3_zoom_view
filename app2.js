@@ -99,9 +99,8 @@ require([
                 var nodes = this.trees().childNodes.slice();
                 nodes.forEach(function (node, idx) {
                     node.idx = idx;
-                    localStorage.setItem(storyPrefix + currentNode.id,
-                        JSON.stringify(story.getJSON(currentNode)));
                 });
+
                 while (nodes.length) {
                     var currentNode = nodes.shift();
 

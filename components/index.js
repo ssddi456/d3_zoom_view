@@ -3,7 +3,8 @@ define([
     './character_card',
     './editable_text',
     './tags',
-    './select_menu'
+    './snippets',
+    './select_menu',
 ], function(
 
 ) {

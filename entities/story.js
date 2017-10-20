@@ -77,10 +77,10 @@ define([
                 isActive: !!ko.unwrap(story.isActive),
                 hasFocus: !!ko.unwrap(story.hasFocus),
                 characters: ko.unwrap(story.characters || []).map(function (character) {
-                    return character && character.id;
+                    return character && character.id || character;
                 }).filter(Boolean),
                 tags: ko.unwrap(story.tags || []).map(function (tag) {
-                    return tag && tag.id;
+                    return tag && tag.id || tag;
                 }).filter(Boolean),
             };
 

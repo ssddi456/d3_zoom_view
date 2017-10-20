@@ -355,7 +355,7 @@ define([
                 '          data-bind="event: { wheel: scrollRow.bind(null, mainRow) }"',
                 '></edit-row>',
 
-                '<tag-row params="{ nodes: tagsRow, tree: $component, idx: function(){ return 2;}, characters: characters, tags: tags }"',
+                '<tag-row params="{ tree: $component, characters: characters, tags: tags }"',
                 '         style="margin-left:80%"',
                 '         data-bind="event: { wheel: scrollRow.bind(null, tagsRow) }"',
                 '         class="scroll-row"',
@@ -418,12 +418,14 @@ define([
                 }
             };
 
-            if (params.nodes.vm) {
-                var oldVM = params.nodes.vm;
-                vm.scrollTo(oldVM.scrollToInfo || 0);
-            }
+            if (params.nodes) {
+                if (params.nodes.vm) {
+                    var oldVM = params.nodes.vm;
+                    vm.scrollTo(oldVM.scrollToInfo || 0);
+                }
 
-            params.nodes.vm = vm;
+                params.nodes.vm = vm;
+            }
 
             return vm;
         }
@@ -446,7 +448,6 @@ define([
                 createViewModel: createRowVM
             },
             template: [
-
                 '<div class="wrap" data-bind="foreach: {data: nodeInfos, as: \'node\'}">',
                 '    <edit-node params="{row: $component, node: node, idx: $index }"',
                 '               data-bind="click: $component.activeNode,',
@@ -546,6 +547,7 @@ define([
                 '            <p data-bind="text:node.desc"></p>',
                 '        </div>',
                 '    </div>',
+                '    <hr/>',
                 '    <select-menu',
                 '        params="onSelect: setTag, from: selectableTags, display: \'name\', label: \'add tag\'">',
                 '    </select-menu>',
@@ -649,10 +651,6 @@ define([
             }
 
             vm.centery = function () {
-                if(this.node.hasFocus()){
-                    return;
-                }
-
                 var self = this;
                 setTimeout(function () {
                     var vCenter = containerHeight() / 2;
@@ -812,7 +810,7 @@ define([
                 createViewModel: createNodeVM
             },
             template: [
-                '<div class="content" data-bind="click: centery">',
+                '<div class="content">',
                 '<editable-text params="value: node.content"></editable-text>',
 
                 '<div class="btn-toolbar">',

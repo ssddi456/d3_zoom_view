@@ -1,10 +1,10 @@
 require([
-    './entities/story',
-    './entities/character',
-    './entities/tag',
-    './lib/download',
+    './js/entities/story',
+    './js/entities/character',
+    './js/entities/tag',
+    './js/lib/download',
     'ko',
-    './components/index'
+    './js/components/index'
 ], function (
     story,
     character,

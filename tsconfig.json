@@ -1,0 +1,9 @@
+{
+    "compilerOptions": {
+        "target": "es5",
+        "outDir": "./js",
+        "module": "amd",
+        "strict": true,
+        "noUnusedLocals": true
+    }
+}

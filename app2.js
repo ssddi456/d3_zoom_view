@@ -3,15 +3,20 @@ require([
     './js/entities/character',
     './js/entities/tag',
     './js/lib/download',
-    'ko',
+    'knockout',
     './js/components/index'
 ], function (
-    story,
-    character,
-    tag,
-    download,
+    storyEntity,
+    characterEntity,
+    tagEntity,
+    downloadModule,
     ko
 ) {
+        var story = storyEntity.story;
+        var character = characterEntity.character;
+        var tag = tagEntity.tag;
+        var download = downloadModule.download;
+
         function get_tree() {
             return {
                 content: '新的故事',
@@ -151,7 +156,7 @@ require([
                         var node = JSON.parse(localStorage.getItem(key));
                         character.load(node);
                         if (!node.removed) {
-                            if (node.idx != undefined) {
+                            if (node.idx != undefined && node.idx >= 0 && !characters[node.idx]) {
                                 characters[node.idx] = node;
                             } else {
                                 characters.push(node);
@@ -161,7 +166,7 @@ require([
                         var node = JSON.parse(localStorage.getItem(key));
                         tag.load(node);
                         if (!node.removed) {
-                            if (node.idx != undefined) {
+                            if (node.idx != undefined && node.idx >= 0 && !characters[node.idx]) {
                                 tags[node.idx] = node;
                             } else {
                                 tags.push(node);
@@ -182,8 +187,8 @@ require([
                     var parentId = node.parentId;
                     var parentArray;
 
-                    if (parentId != undefined) {
-                        if(parentId == 'snippets'){
+                    if (parentId != undefined && parentId != '') {
+                        if (parentId == 'snippets') {
                             parentArray = snippets;
                         } else {
                             parentArray = map[parentId].childNodes;

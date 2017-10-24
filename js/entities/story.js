@@ -45,7 +45,7 @@ define(["require", "exports", "../lib/uuid", "knockout"], function (require, exp
                         return tags[i];
                     }
                 }
-                throw new Error('character ' + tag + ' cannot be found.');
+                throw new Error('tag ' + tag + ' cannot be found.');
             }
             else {
                 return tag;

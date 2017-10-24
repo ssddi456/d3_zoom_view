@@ -114,6 +114,7 @@ ko.components.register('scroll-tree', {
             const characters = params.characters;
             const tags = params.tags;
 
+
             // control scroll here
             const vm = {
                 element: $(componentInfo && componentInfo.element),
@@ -274,6 +275,7 @@ ko.components.register('edit-tree', {
 
             const characters = params.characters;
             const tags = params.tags;
+            const snippets = params.snippets;
 
             const vm = {
                 parentRow: parentRow,
@@ -282,6 +284,7 @@ ko.components.register('edit-tree', {
 
                 characters: characters,
                 tags: tags,
+                snippets: snippets,
 
                 activeNode: ko.observable<StoryWithVM | undefined>(),
                 addNode(parentNode: Story, rowIdx: number, colIdx: number, childIdx?: number) {
@@ -426,16 +429,20 @@ ko.components.register('edit-tree', {
         '          style="margin-left:0%"',
         '          data-bind="event: { wheel: scrollRow.bind(null, parentRow) }"',
         '></edit-row>',
-
         '<edit-row params="{ nodes: mainRow, tree: $component, idx: function(){ return 1;} }"',
         '          class="scroll-row"',
         '          style="margin-left:20%; width: 60%;"',
         '          data-bind="event: { wheel: scrollRow.bind(null, mainRow) }"',
         '></edit-row>',
-
-        '<tag-row params="{ nodes: tagsRow, tree: $component, characters: characters, tags: tags }"',
+        '<tag-row params="{ ',
+        '           nodes: tagsRow, ',
+        '           tree: $component,',
+        '           characters: characters,',
+        '           snippets: snippets,',
+        '           tags: tags',
+        '         }"',
         '         style="margin-left:80%; padding-left:10px;"',
-        '          data-bind="event: { wheel: scrollRow.bind(null, tagsRow) }"',
+        '         data-bind="event: { wheel: scrollRow.bind(null, tagsRow) }"',
         '         class="scroll-row"',
         '></tag-row>',
     ].join('')
@@ -559,16 +566,25 @@ interface StoryAttrEditer {
     selectableTags: KnockoutComputed<Tag[]>;
     setTag(tag: Tag): void;
     removeTag(tag: Tag): void;
+
+    snippets: KnockoutObservableArray<Story>;
+    filterWord: KnockoutObservable<string>;
+    clearFilter(): void;
+    filtedSnippets: KnockoutComputed<Story[]>;
+    useSnippet(snippet: Story): void;
 }
+
 ko.components.register('tag-row', {
     viewModel: {
         createViewModel: function (params, componentInfo) {
-            if(!componentInfo){
+            if (!componentInfo) {
                 return;
             }
             const rowVM = createRowVM(params, componentInfo) as RowVM & StoryAttrEditer;
 
+            rowVM.snippets = params.snippets;
             rowVM.characters = params.characters;
+
             rowVM.selectableCharacters = ko.computed(function () {
                 const activeNode = rowVM.tree.activeNode();
                 if (!activeNode) {
@@ -635,11 +651,40 @@ ko.components.register('tag-row', {
                 rowVM.scrollTo(0);
             });
 
+            rowVM.filterWord = ko.observable('');
+            rowVM.clearFilter = function () {
+                this.filterWord('');
+            };
+
+            rowVM.filtedSnippets = ko.pureComputed<Story[]>(function () {
+                // should be some better search
+                const ret: Story[] = [];
+                const filterBy = ko.unwrap(rowVM.filterWord);
+                if (!filterBy) {
+                    return ret;
+                }
+                const localSnippets = ko.unwrap(rowVM.snippets);
+                localSnippets.forEach(function (story) {
+                    const content = ko.unwrap(story.content);
+                    if (content.indexOf(filterBy) !== -1) {
+                        ret.push(story);
+                    }
+                });
+                return ret;
+            });
+
+            rowVM.useSnippet = function (snippet) {
+                const node = rowVM.tree.activeNode();
+                const content: string = ko.unwrap(node.content);
+                node.content(content + '\n' + ko.unwrap(snippet.content));
+            };
+
             return rowVM;
         }
     },
     template: [
         '<div class="wrap" data-bind="if: tree.activeNode">',
+        '    <span>characters</span>',
         '    <select-menu',
         '        params="onSelect: setCharacter, from: selectableCharacters, display: \'name\', label: \'add character\'">',
         '    </select-menu>',
@@ -653,6 +698,7 @@ ko.components.register('tag-row', {
         '        </div>',
         '    </div>',
         '    <hr/>',
+        '    <span>tags</span>',
         '    <select-menu',
         '        params="onSelect: setTag, from: selectableTags, display: \'name\', label: \'add tag\'">',
         '    </select-menu>',
@@ -663,6 +709,24 @@ ko.components.register('tag-row', {
         '                <i data-bind="click: $component.removeTag" class="glyphicon glyphicon-remove"></i>',
         '            </h4>',
         '            <p data-bind="text:node.desc"></p>',
+        '        </div>',
+        '    </div>',
+        '    <hr/>',
+        '    <div class="input-group">',
+        '        <input type="text" class="form-control" data-bind="value:filterWord">',
+        '        <div class="input-group-addon"><i class="glyphicon glyphicon-remove" data-bind="click: clearFilter"></i></div>',
+        '        <div class="input-group-addon"><i class="glyphicon glyphicon-search"></i></div>',
+        '    </div>',
+        '    <div data-bind="foreach: {data: filtedSnippets, as: \'snippet\'}">',
+        '        <div class="bs-callout bs-callout-normal" >',
+        '           <p data-bind="text:snippet.content"></p>',
+        '           <div class="btn-toolbar">',
+        '               <div class="btn-group">',
+        '                   <button type="button" class="btn btn-default"',
+        '                          data-bind="click:$component.useSnippet"',
+        '                   >use</button>',
+        '               </div>',
+        '           </div>',
         '        </div>',
         '    </div>',
         '</div>',

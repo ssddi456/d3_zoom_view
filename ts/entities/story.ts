@@ -77,7 +77,7 @@ story.load = function (story: Story, parent: Story, characters: Character[], tag
                     return tags[i];
                 }
             }
-            throw new Error('character ' + tag + ' cannot be found.');
+            throw new Error('tag ' + tag + ' cannot be found.');
         } else {
             return tag;
         }

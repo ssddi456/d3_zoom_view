@@ -206,7 +206,7 @@ characters, character-card {
 }
 
 select-menu {
-    display: block;
+    display: inline-block;
 }
 select-menu .dropdown .btn{
     float: initial;

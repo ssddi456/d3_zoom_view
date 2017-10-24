@@ -161,12 +161,14 @@ define(["require", "exports", "knockout", "../entities/story"], function (requir
                 var tagsRow = { row: ko.observableArray() };
                 var characters = params.characters;
                 var tags = params.tags;
+                var snippets = params.snippets;
                 var vm = {
                     parentRow: parentRow,
                     mainRow: mainRow,
                     tagsRow: tagsRow,
                     characters: characters,
                     tags: tags,
+                    snippets: snippets,
                     activeNode: ko.observable(),
                     addNode: function (parentNode, rowIdx, colIdx, childIdx) {
                         /**
@@ -307,9 +309,15 @@ define(["require", "exports", "knockout", "../entities/story"], function (requir
             '          style="margin-left:20%; width: 60%;"',
             '          data-bind="event: { wheel: scrollRow.bind(null, mainRow) }"',
             '></edit-row>',
-            '<tag-row params="{ nodes: tagsRow, tree: $component, characters: characters, tags: tags }"',
+            '<tag-row params="{ ',
+            '           nodes: tagsRow, ',
+            '           tree: $component,',
+            '           characters: characters,',
+            '           snippets: snippets,',
+            '           tags: tags',
+            '         }"',
             '         style="margin-left:80%; padding-left:10px;"',
-            '          data-bind="event: { wheel: scrollRow.bind(null, tagsRow) }"',
+            '         data-bind="event: { wheel: scrollRow.bind(null, tagsRow) }"',
             '         class="scroll-row"',
             '></tag-row>',
         ].join('')
@@ -414,6 +422,7 @@ define(["require", "exports", "knockout", "../entities/story"], function (requir
                     return;
                 }
                 var rowVM = createRowVM(params, componentInfo);
+                rowVM.snippets = params.snippets;
                 rowVM.characters = params.characters;
                 rowVM.selectableCharacters = ko.computed(function () {
                     var activeNode = rowVM.tree.activeNode();
@@ -471,11 +480,37 @@ define(["require", "exports", "knockout", "../entities/story"], function (requir
                 rowVM.tree.activeNode.subscribe(function () {
                     rowVM.scrollTo(0);
                 });
+                rowVM.filterWord = ko.observable('');
+                rowVM.clearFilter = function () {
+                    this.filterWord('');
+                };
+                rowVM.filtedSnippets = ko.pureComputed(function () {
+                    // should be some better search
+                    var ret = [];
+                    var filterBy = ko.unwrap(rowVM.filterWord);
+                    if (!filterBy) {
+                        return ret;
+                    }
+                    var localSnippets = ko.unwrap(rowVM.snippets);
+                    localSnippets.forEach(function (story) {
+                        var content = ko.unwrap(story.content);
+                        if (content.indexOf(filterBy) !== -1) {
+                            ret.push(story);
+                        }
+                    });
+                    return ret;
+                });
+                rowVM.useSnippet = function (snippet) {
+                    var node = rowVM.tree.activeNode();
+                    var content = ko.unwrap(node.content);
+                    node.content(content + '\n' + ko.unwrap(snippet.content));
+                };
                 return rowVM;
             }
         },
         template: [
             '<div class="wrap" data-bind="if: tree.activeNode">',
+            '    <span>characters</span>',
             '    <select-menu',
             '        params="onSelect: setCharacter, from: selectableCharacters, display: \'name\', label: \'add character\'">',
             '    </select-menu>',
@@ -489,6 +524,7 @@ define(["require", "exports", "knockout", "../entities/story"], function (requir
             '        </div>',
             '    </div>',
             '    <hr/>',
+            '    <span>tags</span>',
             '    <select-menu',
             '        params="onSelect: setTag, from: selectableTags, display: \'name\', label: \'add tag\'">',
             '    </select-menu>',
@@ -499,6 +535,24 @@ define(["require", "exports", "knockout", "../entities/story"], function (requir
             '                <i data-bind="click: $component.removeTag" class="glyphicon glyphicon-remove"></i>',
             '            </h4>',
             '            <p data-bind="text:node.desc"></p>',
+            '        </div>',
+            '    </div>',
+            '    <hr/>',
+            '    <div class="input-group">',
+            '        <input type="text" class="form-control" data-bind="value:filterWord">',
+            '        <div class="input-group-addon"><i class="glyphicon glyphicon-remove" data-bind="click: clearFilter"></i></div>',
+            '        <div class="input-group-addon"><i class="glyphicon glyphicon-search"></i></div>',
+            '    </div>',
+            '    <div data-bind="foreach: {data: filtedSnippets, as: \'snippet\'}">',
+            '        <div class="bs-callout bs-callout-normal" >',
+            '           <p data-bind="text:snippet.content"></p>',
+            '           <div class="btn-toolbar">',
+            '               <div class="btn-group">',
+            '                   <button type="button" class="btn btn-default"',
+            '                          data-bind="click:$component.useSnippet"',
+            '                   >use</button>',
+            '               </div>',
+            '           </div>',
             '        </div>',
             '    </div>',
             '</div>',

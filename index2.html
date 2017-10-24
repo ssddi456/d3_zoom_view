@@ -77,7 +77,7 @@
             <scroll-tree params="tree: tree, characters: characters"></scroll-tree>
             <!-- /ko -->
             <!-- ko if: viewType() == 'editView' -->
-            <edit-tree params="tree: tree,  characters: characters, tags: tags"></edit-tree>
+            <edit-tree params="tree: tree, characters: characters, tags: tags, snippets: snippets"></edit-tree>
             <!-- /ko -->
         </div>
         <div class="container-fluid" style="height:100%" data-bind="if: tab() == 'character', visible: tab() == 'character'">
@@ -97,7 +97,7 @@
     <script>
         require.config({
             paths: {
-                ko: 'https://cdn.staticfile.org/knockout/3.4.2/knockout-debug',
+                knockout: 'https://cdn.staticfile.org/knockout/3.4.2/knockout-debug',
             }
         });
     </script>

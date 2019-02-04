@@ -52,7 +52,7 @@
                     <button type="button" class="btn btn-default" data-bind="click: addTree">add story</button>
 
                     <select-menu class="pull-left" 
-                        params="value: tree, from: trees().childNodes, display: 'content', label: 'other story'">
+                        params="value: tree, from: trees().childNodes, onSelect: changeTree.bind($data), display: 'content', label: 'other story'">
                     </select-menu>
                 </div>
 

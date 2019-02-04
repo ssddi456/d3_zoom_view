@@ -54,7 +54,6 @@ require([
                 if (tree) {
                     this.tree(tree);
                 }
-                this.selectTree(false);
             },
 
 

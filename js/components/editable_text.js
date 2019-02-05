@@ -34,25 +34,6 @@ define(["require", "exports", "knockout"], function (require, exports, ko) {
                 return vm;
             },
         },
-        template: [
-            '<!-- ko if: editing -->',
-            '<!-- ko if: type == \'textarea\' -->',
-            '<textarea data-bind="value: value, event:{blur: endEdit}"></textarea>',
-            '<!-- /ko -->',
-            '<!-- ko if: type == \'input\' -->',
-            '<input type="text" class="form-control" data-bind="value: value, event:{blur: endEdit}"></input>',
-            '<!-- /ko -->',
-            '<!-- /ko -->',
-            '<!-- ko ifnot: editing -->',
-            '<!-- ko if: type == \'textarea\' -->',
-            '<p data-bind="text: value, event:{dblclick: edit}"></p>',
-            '<!-- /ko -->',
-            '<!-- ko if: type == \'input\' -->',
-            '<span data-bind="text: value, event:{dblclick: edit}"></span>',
-            '<!-- /ko -->',
-            '<i class="icon glyphicon glyphicon-edit" data-bind="click: edit"></i>',
-            '<!-- /ko -->',
-            '<div class="clear"></div>',
-        ].join('')
+        template: "\n        <!-- ko if: editing -->\n        <!-- ko if: type == 'textarea' -->\n        <textarea data-bind=\"value: value, event:{blur: endEdit}\"></textarea>\n        <!-- /ko -->\n        <!-- ko if: type == 'input' -->\n        <input type=\"text\" class=\"form-control\" data-bind=\"value: value, event:{blur: endEdit}\"></input>\n        <!-- /ko -->\n        <!-- /ko -->\n        <!-- ko ifnot: editing -->\n        <!-- ko if: type == 'textarea' -->\n        <p data-bind=\"text: value, event:{dblclick: edit}\"></p>\n        <!-- /ko -->\n        <!-- ko if: type == 'input' -->\n        <span data-bind=\"text: value, event:{dblclick: edit}\"></span>\n        <!-- /ko -->\n        <i class=\"icon glyphicon glyphicon-edit\" data-bind=\"click: edit\"></i>\n        <!-- /ko -->\n        <div class=\"clear\"></div>\n    "
     });
 });

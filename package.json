@@ -1,6 +1,11 @@
 {
   "devDependencies": {
-    "@types/jquery": "^3.2.15",
+    "@types/d3": "^5.7.0",
+    "@types/dagre-d3": "^0.4.38",
+    "@types/jquery": "^3.3.29",
     "@types/knockout": "^3.4.46"
+  },
+  "dependencies": {
+    "dagre-d3": "^0.6.3"
   }
 }

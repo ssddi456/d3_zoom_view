@@ -3,7 +3,12 @@
         "target": "es5",
         "outDir": "./js",
         "module": "amd",
+        "allowJs": false,
         "strict": true,
-        "noUnusedLocals": true
+        "noUnusedLocals": true,
+        "allowSyntheticDefaultImports": true,
+        "lib": [
+            "es5", "es2015", "dom"
+        ]
     }
 }

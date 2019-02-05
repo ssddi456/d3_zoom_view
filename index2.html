@@ -72,9 +72,9 @@
     </nav>
 
     <div style="position:absolute;top:70px;bottom:0px;left:15px;right:15px;">
-        <div class="container-fluid"  data-bind="if: tab() == 'story'">
+        <div style="height:100%;" class="container-fluid"  data-bind="if: tab() == 'story'">
             <!-- ko if: viewType() == 'scrollView' -->
-            <scroll-tree params="tree: tree, characters: characters"></scroll-tree>
+            <div style="height:100%;" data-bind="dagre-view: tree, characters: characters"></div>
             <!-- /ko -->
             <!-- ko if: viewType() == 'editView' -->
             <edit-tree params="tree: tree, characters: characters, tags: tags, snippets: snippets"></edit-tree>
@@ -93,11 +93,17 @@
         
     <script src="https://cdn.staticfile.org/jquery/2.1.1-rc2/jquery.js"></script>
     <script src="https://cdn.staticfile.org/underscore.js/1.7.0/underscore.js"></script>
+    <script src="https://cdn.staticfile.org/d3/4.12.2/d3.min.js"></script>
     <script src="https://cdn.staticfile.org/require.js/2.1.15/require.js"></script>
     <script>
+        define('d3', function() {
+            return window.d3;
+        });
         require.config({
             paths: {
                 knockout: 'https://cdn.staticfile.org/knockout/3.4.2/knockout-debug',
+                'dagre-d3': './js/lib/dagre-d3',
+                'dagre': './js/lib/dagre',
             }
         });
     </script>

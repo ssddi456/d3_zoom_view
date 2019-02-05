@@ -1,4 +1,4 @@
-define(["require", "exports", "./scroll_row", "./character_card", "./editable_text", "./tags", "./snippets", "./select_menu"], function (require, exports, scroll_row, character_card, editable_text, tags, snippets, select_menu) {
+define(["require", "exports", "./scroll_row", "./character_card", "./editable_text", "./tags", "./snippets", "./select_menu", "./story_dag"], function (require, exports, scroll_row, character_card, editable_text, tags, snippets, select_menu, story_dag) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.components = {
@@ -8,5 +8,8 @@ define(["require", "exports", "./scroll_row", "./character_card", "./editable_te
         tags: tags,
         snippets: snippets,
         select_menu: select_menu,
+    };
+    exports.bindingPlaceHolder = {
+        story_dag: story_dag
     };
 });

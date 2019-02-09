@@ -33,7 +33,7 @@ export interface StoryJSON {
 export const story = function (parentNode?: Story, childIdx?: number) {
     const newNode: Story = {
         id: uuid(),
-        content: ko.observable('test'),
+        content: ko.observable('story content'),
         childNodes: [] as Story[],
         characters: ko.observableArray([]),
         tags: ko.observableArray([]),

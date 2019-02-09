@@ -6,10 +6,16 @@ define(["require", "exports", "knockout", "d3"], function (require, exports, ko,
         return edgeIdPrefix + e.v + '_' + e.w;
     }
     exports.getIdOfEdge = getIdOfEdge;
+    function setStoryNode(graph, story) {
+        graph.setNode(story.id, {
+            label: ko.unwrap(story.content),
+            ref: story,
+        });
+    }
     function walkEachChild(stories, parent, graph) {
         for (var i = 0; i < stories.length; i++) {
             var element = stories[i];
-            graph.setNode(element.id, { label: ko.unwrap(element.content) });
+            setStoryNode(graph, element);
             var edge = {
                 v: element.id,
                 w: parent.id,
@@ -21,7 +27,7 @@ define(["require", "exports", "knockout", "d3"], function (require, exports, ko,
         }
     }
     function storyToGraph(story, graph) {
-        graph.setNode(story.id, { label: ko.unwrap(story.content) });
+        setStoryNode(graph, story);
         if (story.childNodes.length) {
             walkEachChild(story.childNodes, story, graph);
         }
@@ -48,6 +54,8 @@ define(["require", "exports", "knockout", "d3"], function (require, exports, ko,
         var tailIntersect = tail.intersect(points[0]);
         points.unshift(tailIntersect);
         points.push(head.intersect(points[points.length - 1]));
+        eraseSizeForNode(tail);
+        eraseSizeForNode(head);
         return points;
     }
     exports.calcPoints = calcPoints;
@@ -65,7 +73,10 @@ define(["require", "exports", "knockout", "d3"], function (require, exports, ko,
         }
         return n;
     }
-    exports.fixSizeForNode = fixSizeForNode;
+    function eraseSizeForNode(n) {
+        delete n.width;
+        delete n.height;
+    }
     var line = d3.line()
         .x(function (d) { return d.x; })
         .y(function (d) { return d.y; });
@@ -74,4 +85,14 @@ define(["require", "exports", "knockout", "d3"], function (require, exports, ko,
         return line(points);
     }
     exports.createLineD = createLineD;
+    function centralToNode(node, g) {
+        fixSizeForNode(node);
+        var ret = {
+            x: g.width / 2 - (node.x + node.width / 2),
+            y: g.height / 2 - (node.y + node.height / 2)
+        };
+        eraseSizeForNode(node);
+        return ret;
+    }
+    exports.centralToNode = centralToNode;
 });

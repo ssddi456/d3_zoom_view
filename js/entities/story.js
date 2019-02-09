@@ -4,7 +4,7 @@ define(["require", "exports", "../lib/uuid", "knockout"], function (require, exp
     exports.story = function (parentNode, childIdx) {
         var newNode = {
             id: uuid_1.uuid(),
-            content: ko.observable('test'),
+            content: ko.observable('story content'),
             childNodes: [],
             characters: ko.observableArray([]),
             tags: ko.observableArray([]),

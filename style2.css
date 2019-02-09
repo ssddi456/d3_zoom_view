@@ -89,11 +89,6 @@ scroll-row .wrap {
     opacity: 0.8;
 }
 
-.scroll-row.active,
-scroll-row.active {
-    /* width: 40%; */
-}
-
 .scroll-row.active .wrap,
 scroll-row.active .wrap {
     opacity: 1;

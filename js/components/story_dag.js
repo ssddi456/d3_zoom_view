@@ -115,8 +115,8 @@ define(["require", "exports", "knockout", "dagre-d3", "d3", "../util/dagre_util"
                     name: 'add Child',
                     click: function () {
                         var ref = itemContext.ref;
-                        var newStory = story_1.story(ref);
-                        ref.childNodes.push(newStory);
+                        var newStory = story_1.story(ref, ref.childNodes.length);
+                        newStory.content(ko.unwrap(ref.content));
                         dagre_util_1.storyToGraph(originData, g);
                         // Run the renderer. This is what draws the final graph.
                         renderer(svgGroup, g);
@@ -125,11 +125,23 @@ define(["require", "exports", "knockout", "dagre-d3", "d3", "../util/dagre_util"
                         doCenterToNode(newNode);
                     }
                 }, {
-                    name: 'add sibling',
+                    name: 'append sibling',
                     click: function () {
-                        // storyToGraph(originData, g);
-                        // // Run the renderer. This is what draws the final graph.
-                        // renderer(svgGroup as any, g);
+                        var ref = itemContext.ref;
+                        var parent = ref.parent;
+                        if (parent) {
+                            var newStory = story_1.story(parent, parent.childNodes.indexOf(ref) + 1);
+                            newStory.content(ko.unwrap(parent.content));
+                            parent.childNodes.forEach(function (node) {
+                                g.removeNode(node.id);
+                            });
+                            dagre_util_1.storyToGraph(originData, g);
+                            // Run the renderer. This is what draws the final graph.
+                            renderer(svgGroup, g);
+                            var newNode = g.node(newStory.id);
+                            bindNodeEvent(d3.select(newNode.elem));
+                            doCenterToNode(newNode);
+                        }
                     }
                 }], true, menuDirection.vertical);
             var drag = d3.drag().on('drag', function (d) {
@@ -162,6 +174,7 @@ define(["require", "exports", "knockout", "dagre-d3", "d3", "../util/dagre_util"
                     d3.event.stopPropagation();
                     console.log('context', d);
                     itemContext = g.node(d);
+                    console.log(itemContext);
                     var mouseInfo = d3.mouse(svg.node());
                     itemBtns.style('display', null).attr('transform', 'translate(' + mouseInfo[0] + ',' + mouseInfo[1] + ')');
                 });

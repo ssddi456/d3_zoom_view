@@ -1,5 +1,5 @@
 import { Node, Edge, graphlib } from 'dagre';
-import { Story, story } from '../entities/story';
+import { Story } from '../entities/story';
 import * as ko from 'knockout';
 import * as d3 from 'd3';
 
@@ -9,10 +9,10 @@ export function getIdOfEdge(e: Edge) {
     return edgeIdPrefix + e.v + '_' + e.w;
 }
 
-function setStoryNode(graph: graphlib.Graph, story: Story){
-    graph.setNode(story.id, { 
-        label: ko.unwrap(story.content),
-        ref: story,
+function setStoryNode(graph: graphlib.Graph, ref: Story){
+    graph.setNode(ref.id, { 
+        label: ko.unwrap(ref.content),
+        ref,
     });
 }
 

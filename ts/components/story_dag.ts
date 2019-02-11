@@ -136,8 +136,8 @@ ko.bindingHandlers['dagre-view'] = {
 
         storyToGraph(originData, g);
         // Run the renderer. This is what draws the final graph.
-        renderer(svgGroup as any, g);
 
+        renderer(svgGroup as any, g);
         buildBtns(
             viewPortBtns,
             [{
@@ -150,7 +150,7 @@ ko.bindingHandlers['dagre-view'] = {
                 }
             }]);
         interface StoryNode extends Node {
-            ref: Story
+            ref: Story;
         }
 
         let itemContext: StoryNode;
@@ -160,8 +160,9 @@ ko.bindingHandlers['dagre-view'] = {
                 name: 'add Child',
                 click() {
                     const ref = itemContext.ref;
-                    const newStory = story(ref);
-                    ref.childNodes.push(newStory);
+                    const newStory = story(ref, ref.childNodes.length);
+                    newStory.content(ko.unwrap(ref.content));
+
                     storyToGraph(originData, g);
                     // Run the renderer. This is what draws the final graph.
                     renderer(svgGroup as any, g);
@@ -173,11 +174,28 @@ ko.bindingHandlers['dagre-view'] = {
                     doCenterToNode(newNode);
                 }
             }, {
-                name: 'add sibling',
+                name: 'append sibling',
                 click() {
-                    // storyToGraph(originData, g);
-                    // // Run the renderer. This is what draws the final graph.
-                    // renderer(svgGroup as any, g);
+                    const ref = itemContext.ref;
+                    const parent = ref.parent;
+                    if (parent) {
+                        const newStory = story(parent, parent.childNodes.indexOf(ref) + 1);
+                        newStory.content(ko.unwrap(parent.content));
+                        
+                        parent.childNodes.forEach(function(node){
+                            g.removeNode(node.id);
+                        });
+
+                        storyToGraph(originData, g);
+                        // Run the renderer. This is what draws the final graph.
+                        renderer(svgGroup as any, g);
+
+                        const newNode = g.node(newStory.id) as StoryNode;
+                        bindNodeEvent(
+                            d3.select(newNode.elem)
+                        );
+                        doCenterToNode(newNode);
+                    }
                 }
             }],
             true,
@@ -220,6 +238,8 @@ ko.bindingHandlers['dagre-view'] = {
                     d3.event.stopPropagation();
                     console.log('context', d);
                     itemContext = g.node(d) as StoryNode;
+                    console.log(itemContext);
+
                     const mouseInfo = d3.mouse(svg.node() as any);
                     itemBtns.style('display', null).attr('transform', 'translate(' + mouseInfo[0] + ',' + mouseInfo[1] + ')')
                 });

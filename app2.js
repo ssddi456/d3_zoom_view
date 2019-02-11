@@ -127,7 +127,7 @@ require([
                 localStorage.setItem(configPrefix, JSON.stringify(config));
             },
             load: function () {
-                var map = {};
+                var storyAndSnippetsMap = {};
 
                 var newTree = {
                     childNodes: []
@@ -146,7 +146,7 @@ require([
                         var node = JSON.parse(localStorage.getItem(key));
                         if (!node.removed) {
                             node.childNodes = [];
-                            map[node.id] = node;
+                            storyAndSnippetsMap[node.id] = node;
                         } else {
                             // dead nodes
                             // console.log( node );
@@ -180,9 +180,9 @@ require([
                     this.tab(config.tab);
                     this.viewType(config.viewType);
                 }
-
-                Object.keys(map).forEach(function (key) {
-                    var node = map[key];
+                const mapKeys = Object.keys(storyAndSnippetsMap);
+                mapKeys.forEach(function (key) {
+                    var node = storyAndSnippetsMap[key];
                     var parentId = node.parentId;
                     var parentArray;
 
@@ -190,7 +190,7 @@ require([
                         if (parentId == 'snippets') {
                             parentArray = snippets;
                         } else {
-                            parentArray = map[parentId].childNodes;
+                            parentArray = storyAndSnippetsMap[parentId].childNodes;
                         }
                     } else {
                         parentArray = newTree.childNodes;
@@ -202,13 +202,20 @@ require([
                     }
                 });
                 newTree.childNodes = newTree.childNodes.filter(Boolean);
-                Object.keys(map).forEach(function (key) {
-                    map[key].childNodes = map[key].childNodes.filter(Boolean);
-                });
-
                 characters = characters.filter(Boolean);
                 tags = tags.filter(Boolean);
+
+                console.log(mapKeys);
+                
+                mapKeys.forEach(function (key) {
+                    var node = storyAndSnippetsMap[key];
+                    node.childNodes = node.childNodes.filter(Boolean);
+                    var parent = storyAndSnippetsMap[node.parentId];
+                    story.load(node, parent, characters, tags);
+                });
+
                 snippets = snippets.filter(Boolean);
+
 
                 this.trees(newTree);
                 this.characters(characters);

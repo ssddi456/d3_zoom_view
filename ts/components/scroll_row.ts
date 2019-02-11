@@ -117,7 +117,7 @@ ko.components.register('scroll-tree', {
 
             // control scroll here
             const vm = {
-                element: $(componentInfo && componentInfo.element),
+                element: $(componentInfo! && componentInfo!.element),
                 rows: ko.observableArray<Row>([]),
                 activeRow: ko.observable<Row>(),
                 activeNode: ko.observable<StoryWithVM>(),
@@ -453,7 +453,7 @@ function createRowVM(
         tree: LayoutTree,
         nodes: Row,
         idx(): number,
-    }, componentInfo: { element: Node }) {
+    }, componentInfo: { element: HTMLElement | Node }) {
     const tree = params.tree;
     // control scroll here
     const $element = $(componentInfo.element);

@@ -6,10 +6,10 @@ define(["require", "exports", "knockout", "d3"], function (require, exports, ko,
         return edgeIdPrefix + e.v + '_' + e.w;
     }
     exports.getIdOfEdge = getIdOfEdge;
-    function setStoryNode(graph, story) {
-        graph.setNode(story.id, {
-            label: ko.unwrap(story.content),
-            ref: story,
+    function setStoryNode(graph, ref) {
+        graph.setNode(ref.id, {
+            label: ko.unwrap(ref.content),
+            ref: ref,
         });
     }
     function walkEachChild(stories, parent, graph) {

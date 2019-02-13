@@ -12,24 +12,28 @@ define(["require", "exports", "knockout", "d3"], function (require, exports, ko,
             ref: ref,
         });
     }
-    function walkEachChild(stories, parent, graph) {
+    function walkEachChild(stories, parent, graph, handler) {
         for (var i = 0; i < stories.length; i++) {
             var element = stories[i];
-            setStoryNode(graph, element);
-            var edge = {
-                v: element.id,
-                w: parent.id,
-            };
-            graph.setEdge(edge, { id: getIdOfEdge(edge) });
-            if (element.childNodes.length) {
-                walkEachChild(element.childNodes, element, graph);
+            if (handler(element, parent, graph) !== false && element.childNodes.length) {
+                walkEachChild(element.childNodes, element, graph, handler);
             }
         }
     }
     function storyToGraph(story, graph) {
         setStoryNode(graph, story);
         if (story.childNodes.length) {
-            walkEachChild(story.childNodes, story, graph);
+            walkEachChild(story.childNodes, story, graph, function (element, parent, graph) {
+                if (element.visible === false) {
+                    return false;
+                }
+                setStoryNode(graph, element);
+                var edge = {
+                    v: element.id,
+                    w: parent.id,
+                };
+                graph.setEdge(edge, { id: getIdOfEdge(edge) });
+            });
         }
     }
     exports.storyToGraph = storyToGraph;
@@ -38,6 +42,7 @@ define(["require", "exports", "knockout", "d3"], function (require, exports, ko,
             .multiply(elem.getScreenCTM());
         return { x: matrix.e, y: matrix.f };
     }
+    exports.getCoords = getCoords;
     function calcPoints(g, e, wiewport) {
         var edge = g.edge(e);
         var tail = fixSizeForNode(g.node(e.v));
@@ -95,4 +100,26 @@ define(["require", "exports", "knockout", "d3"], function (require, exports, ko,
         return ret;
     }
     exports.centralToNode = centralToNode;
+    function hideAllDecestant(node, g) {
+        var story = node.ref;
+        story.decestantVisible = false;
+        if (story.childNodes.length) {
+            walkEachChild(story.childNodes, story, g, function (child, parent, g) {
+                child.visible = false;
+                g.removeNode(child.id);
+            });
+        }
+    }
+    exports.hideAllDecestant = hideAllDecestant;
+    function showAllDecestant(node, g) {
+        var story = node.ref;
+        story.decestantVisible = true;
+        if (story.childNodes.length) {
+            walkEachChild(story.childNodes, story, g, function (child, parent, g) {
+                child.visible = true;
+            });
+            storyToGraph(story, g);
+        }
+    }
+    exports.showAllDecestant = showAllDecestant;
 });

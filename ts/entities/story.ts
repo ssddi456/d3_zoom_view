@@ -16,6 +16,9 @@ export interface Story {
     hasFocus: KnockoutObservable<boolean>;
     removed: boolean;
     parent?: Story;
+
+    visible?: boolean;
+    decestantVisible?: boolean;
 }
 
 export interface StoryJSON {

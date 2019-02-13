@@ -2,6 +2,7 @@ import { Node, Edge, graphlib } from 'dagre';
 import { Story } from '../entities/story';
 import * as ko from 'knockout';
 import * as d3 from 'd3';
+import { StoryNode } from '../components/story_dag';
 
 const edgeIdPrefix = 'edge_';
 
@@ -9,27 +10,25 @@ export function getIdOfEdge(e: Edge) {
     return edgeIdPrefix + e.v + '_' + e.w;
 }
 
-function setStoryNode(graph: graphlib.Graph, ref: Story){
-    graph.setNode(ref.id, { 
+function setStoryNode(graph: graphlib.Graph, ref: Story) {
+    graph.setNode(ref.id, {
         label: ko.unwrap(ref.content),
         ref,
     });
 }
 
-function walkEachChild(stories: Story[], parent: Story, graph: graphlib.Graph) {
+function walkEachChild(stories: Story[],
+    parent: Story,
+    graph: graphlib.Graph,
+    handler: (story: Story,
+        parent: Story,
+        graph: graphlib.Graph, ) => boolean | void
+) {
     for (let i = 0; i < stories.length; i++) {
         const element = stories[i];
-        setStoryNode(graph, element);
         
-        const edge = {
-            v: element.id,
-            w: parent.id,
-        };
-
-        graph.setEdge(edge, { id: getIdOfEdge(edge) });
-
-        if (element.childNodes.length) {
-            walkEachChild(element.childNodes, element, graph);
+        if (handler(element, parent, graph) !== false && element.childNodes.length) {
+            walkEachChild(element.childNodes, element, graph, handler);
         }
     }
 }
@@ -37,11 +36,24 @@ function walkEachChild(stories: Story[], parent: Story, graph: graphlib.Graph) {
 export function storyToGraph(story: Story, graph: graphlib.Graph) {
     setStoryNode(graph, story);
     if (story.childNodes.length) {
-        walkEachChild(story.childNodes, story, graph);
+        walkEachChild(story.childNodes, story, graph, function (element, parent, graph){
+            if(element.visible === false) {
+                return false;
+            }
+
+            setStoryNode(graph, element);
+
+            const edge = {
+                v: element.id,
+                w: parent.id,
+            };
+
+            graph.setEdge(edge, { id: getIdOfEdge(edge) });
+        });
     }
 }
 
-function getCoords(elem: SVGGraphicsElement, wiewport: DOMMatrix) {
+export function getCoords(elem: SVGGraphicsElement, wiewport: DOMMatrix) {
     const matrix = wiewport
         .multiply(elem.getScreenCTM()!)
     return { x: matrix.e, y: matrix.f };
@@ -89,7 +101,7 @@ function fixSizeForNode(n: Node) {
     return n;
 }
 
-function eraseSizeForNode(n: Node){
+function eraseSizeForNode(n: Node) {
     delete n.width;
     delete n.height;
 }
@@ -122,4 +134,26 @@ export function centralToNode(node: Node, g: Size) {
 
     eraseSizeForNode(node);
     return ret;
+}
+
+export function hideAllDecestant(node: StoryNode, g: graphlib.Graph) {
+    const story = node.ref;
+    story.decestantVisible = false;
+    if(story.childNodes.length) {
+        walkEachChild(story.childNodes, story, g, function( child, parent, g){
+            child.visible = false;
+            g.removeNode(child.id);
+        });
+    }
+}
+
+export function showAllDecestant(node: StoryNode, g: graphlib.Graph){
+    const story = node.ref;
+    story.decestantVisible = true;
+    if (story.childNodes.length) {
+        walkEachChild(story.childNodes, story, g, function (child, parent, g) {
+            child.visible = true;
+        });
+        storyToGraph(story, g);
+    }
 }

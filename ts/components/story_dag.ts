@@ -2,13 +2,13 @@ import * as ko from 'knockout';
 import { graphlib, render } from 'dagre-d3';
 import { Node, } from 'dagre';
 import * as d3 from 'd3';
-import { storyToGraph, createLineD, centralToNode } from '../util/dagre_util';
+import { storyToGraph, createLineD, centralToNode, showAllDecestant, hideAllDecestant } from '../util/dagre_util';
 import { D3ZoomEvent, ZoomTransform } from 'd3';
 import { Story, story } from '../entities/story';
+import { buildBtns, MenuDirection, makeContextMenu } from './context_menu';
 
-interface BtnConfig {
-    name: string;
-    click: () => void
+export interface StoryNode extends Node {
+    ref: Story;
 }
 
 ko.bindingHandlers['dagre-view'] = {
@@ -67,58 +67,17 @@ ko.bindingHandlers['dagre-view'] = {
         window.addEventListener('resize', doResize);
 
         const svg = container.append('svg');
-        const viewPortBtns = svg.append('g').attr('transform', 'translate(10, 10)');
+        // top left menu
+        const viewPortBtns = svg.append('g').attr('transform', 'translate(10, 10)')
+            .on('contextmenu', function () { d3.event.preventDefault(); });
+        // all contents
         const svgGroup = svg.append("g");
-        const itemBtns = svg.append("g").style('display', 'none').on('contextmenu', function () { d3.event.preventDefault(); });
+        const DAGContainer = svgGroup.append('g');
 
-        enum menuDirection {
-            horizontal,
-            vertical,
-        }
-
-        function buildBtns(
-            btnContainer: d3.Selection<SVGGElement, any, any, any>,
-            _btns: BtnConfig[],
-            isContextmenu: boolean = false,
-            direction: menuDirection = menuDirection.horizontal
-        ) {
-            _btns.reduce(function (left, item) {
-                const btn = btnContainer.append('g').attr('transform',
-                    direction == menuDirection.horizontal
-                        ? 'translate(' + left + ',' + 0 + ')'
-                        : 'translate(' + 0 + ',' + left + ')'
-                );
-                const bg = btn.append('rect')
-                    .attr('y', -5)
-                    .style('fill', '#e2edef');
-                const text = btn.append('text')
-                    .attr('dx', '10')
-                    .attr('dy', '10');
-
-                setTimeout(() => {
-                    const bbox = text.node()!.getBBox();
-                    console.log(bbox);
-                    bg
-                        .attr('width', bbox.width + 10 * 2)
-                        .attr('height', bbox.height + 10)
-                }, 10);
-
-                text.text(item.name);
-                btn
-                    .on('mousedown', function () {
-                        d3.event.stopPropagation();
-                    })
-                    .on('click', function (...args: any[]) {
-                        item.click.apply(this, args as any);
-                        if (isContextmenu) {
-                            btnContainer.style('display', 'none');
-                        }
-                    });
-
-                return left + 10 * 2 + (direction == menuDirection.horizontal ? item.name.length * 7 : 15);
-            }, 0);
-        }
-
+        // context menu
+        const itemContextMenu = svg.append("g")
+            .style('display', 'none')
+            .on('contextmenu', function () { d3.event.preventDefault(); });
 
         const zoom = d3.zoom().on("zoom", function () {
             viewportMatrix = (d3.event as D3ZoomEvent<any, any>).transform
@@ -127,45 +86,39 @@ ko.bindingHandlers['dagre-view'] = {
             svgGroup.attr("transform", viewportMatrix.toString());
         });
 
-        svg
-            .on('mousedown', function () {
-                itemBtns.style('display', 'none');
-            })
-            .call(zoom as any);
+
 
 
         storyToGraph(originData, g);
         // Run the renderer. This is what draws the final graph.
 
-        renderer(svgGroup as any, g);
+        renderer(DAGContainer as any, g);
         buildBtns(
             viewPortBtns,
             [{
                 name: 'relayout', click() {
-                    renderer(svgGroup as any, g);
+                    renderer(DAGContainer as any, g);
                 }
             }, {
                 name: 'central', click() {
                     doResize();
                 }
             }]);
-        interface StoryNode extends Node {
-            ref: Story;
-        }
 
-        let itemContext: StoryNode;
-        buildBtns(
-            itemBtns,
+        const itemContext = makeContextMenu<StoryNode>(svg, itemContextMenu,
             [{
                 name: 'add Child',
-                click() {
+                click(itemContext) {
                     const ref = itemContext.ref;
+                    if (ref.decestantVisible == false) {
+                        showAllDecestant(itemContext, g);
+                    }
                     const newStory = story(ref, ref.childNodes.length);
                     newStory.content(ko.unwrap(ref.content));
 
                     storyToGraph(originData, g);
                     // Run the renderer. This is what draws the final graph.
-                    renderer(svgGroup as any, g);
+                    renderer(DAGContainer as any, g);
 
                     const newNode = g.node(newStory.id) as StoryNode;
                     bindNodeEvent(
@@ -175,20 +128,20 @@ ko.bindingHandlers['dagre-view'] = {
                 }
             }, {
                 name: 'append sibling',
-                click() {
+                click(itemContext) {
                     const ref = itemContext.ref;
                     const parent = ref.parent;
                     if (parent) {
                         const newStory = story(parent, parent.childNodes.indexOf(ref) + 1);
                         newStory.content(ko.unwrap(parent.content));
-                        
-                        parent.childNodes.forEach(function(node){
+
+                        parent.childNodes.forEach(function (node) {
                             g.removeNode(node.id);
                         });
 
                         storyToGraph(originData, g);
                         // Run the renderer. This is what draws the final graph.
-                        renderer(svgGroup as any, g);
+                        renderer(DAGContainer as any, g);
 
                         const newNode = g.node(newStory.id) as StoryNode;
                         bindNodeEvent(
@@ -197,9 +150,23 @@ ko.bindingHandlers['dagre-view'] = {
                         doCenterToNode(newNode);
                     }
                 }
-            }],
-            true,
-            menuDirection.vertical);
+            }, {
+                name: 'toggle child',
+                click(itemContext) {
+                    const ref = itemContext.ref;
+                    if (ref.decestantVisible === false) {
+                        showAllDecestant(itemContext, g);
+                    } else {
+                        hideAllDecestant(itemContext, g);
+                    }
+
+                    storyToGraph(originData, g);
+                    // Run the renderer. This is what draws the final graph.
+                    renderer(DAGContainer as any, g);
+
+                    doCenterToNode(g.node(ref.id) as StoryNode);
+                }
+            }], MenuDirection.vertical);
 
         const drag = d3.drag<SVGGElement, string>().on('drag', function (d) {
             const node = d3.select(this);
@@ -223,6 +190,16 @@ ko.bindingHandlers['dagre-view'] = {
 
         bindNodeEvent(svgGroup.selectAll("g.node"));
 
+        doResize();
+        svg
+            .call(zoom as any);
+
+        ko.utils.domNodeDisposal.addDisposeCallback(element, function () {
+            // This will be called when the element is removed by Knockout or
+            // if some other part of your code calls ko.removeNode(element)
+            window.removeEventListener('resize', doResize);
+        });
+
         function bindNodeEvent(nodes: d3.Selection<any, any, any, any>) {
             nodes
                 .call(drag as any)
@@ -237,11 +214,7 @@ ko.bindingHandlers['dagre-view'] = {
                     d3.event.preventDefault();
                     d3.event.stopPropagation();
                     console.log('context', d);
-                    itemContext = g.node(d) as StoryNode;
-                    console.log(itemContext);
-
-                    const mouseInfo = d3.mouse(svg.node() as any);
-                    itemBtns.style('display', null).attr('transform', 'translate(' + mouseInfo[0] + ',' + mouseInfo[1] + ')')
+                    itemContext.showWithContext(g.node(d) as StoryNode);
                 });
         }
 
@@ -253,13 +226,6 @@ ko.bindingHandlers['dagre-view'] = {
             svgGroup.transition().duration(750).call(zoom.transform as any, viewportMatrix);
         }
 
-        doResize();
-
-        ko.utils.domNodeDisposal.addDisposeCallback(element, function () {
-            // This will be called when the element is removed by Knockout or
-            // if some other part of your code calls ko.removeNode(element)
-            window.removeEventListener('resize', doResize);
-        });
     },
 
 }

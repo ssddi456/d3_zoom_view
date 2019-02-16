@@ -4,7 +4,7 @@ import { Character } from '../entities/character';
 import { Tag } from '../entities/tag';
 
 interface SnippetTabVM {
-    activeNode: KnockoutObservable<Story>;
+    activeNode: KnockoutObservable<Story | undefined>;
     characters: KnockoutObservableArray<Character>;
     tags: KnockoutObservableArray<Tag>;
     snippets: KnockoutObservableArray<Story>;
@@ -24,7 +24,7 @@ ko.components.register('snippets', {
 
 
             const vm: SnippetTabVM = {
-                activeNode: ko.observable<Story>(),
+                activeNode: ko.observable(),
                 characters: characters,
                 tags: tags,
                 snippets: snippets,

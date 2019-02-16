@@ -21,6 +21,7 @@ define(["require", "exports", "knockout", "d3"], function (require, exports, ko,
         }
     }
     function storyToGraph(story, graph) {
+        console.log(story);
         setStoryNode(graph, story);
         if (story.childNodes.length) {
             walkEachChild(story.childNodes, story, graph, function (element, parent, graph) {

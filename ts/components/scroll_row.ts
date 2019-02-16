@@ -119,8 +119,8 @@ ko.components.register('scroll-tree', {
             const vm = {
                 element: $(componentInfo! && componentInfo!.element),
                 rows: ko.observableArray<Row>([]),
-                activeRow: ko.observable<Row>(),
-                activeNode: ko.observable<StoryWithVM>(),
+                activeRow: ko.observable<Row | null>(),
+                activeNode: ko.observable<StoryWithVM | null>(),
                 addNode: function (parentNode: StoryWithVM, rowIdx: number, colIdx: number, childIdx?: number) {
                     const newNode = story(parentNode, childIdx) as StoryWithVM;
 

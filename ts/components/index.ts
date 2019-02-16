@@ -5,6 +5,7 @@ import * as tags from './tags';
 import * as snippets from './snippets';
 import * as select_menu from './select_menu';
 import * as story_dag from './story_dag';
+import * as dialog from './dialog';
 
 export const components = {
     scroll_row,
@@ -13,6 +14,7 @@ export const components = {
     tags,
     snippets,
     select_menu,
+    dialog,
 };
 
 export const bindingPlaceHolder = {

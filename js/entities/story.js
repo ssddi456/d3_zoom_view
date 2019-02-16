@@ -13,11 +13,16 @@ define(["require", "exports", "../lib/uuid", "knockout"], function (require, exp
             removed: false,
             parent: parentNode,
         };
-        if (parentNode && childIdx !== undefined) {
+        if (parentNode) {
             if (!parentNode.childNodes) {
                 parentNode.childNodes = [];
             }
-            parentNode.childNodes.splice(childIdx, 0, newNode);
+            if (childIdx !== undefined) {
+                parentNode.childNodes.splice(childIdx, 0, newNode);
+            }
+            else {
+                parentNode.childNodes.push(newNode);
+            }
         }
         return newNode;
     };

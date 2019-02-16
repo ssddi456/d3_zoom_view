@@ -18,15 +18,13 @@ require([
         var download = downloadModule.download;
 
         function get_tree() {
-            return {
-                content: '新的故事',
-                childNodes: [
-                    { content: '起', childNodes: [] },
-                    { content: '承', childNodes: [] },
-                    { content: '转', childNodes: [] },
-                    { content: '合', childNodes: [] },
-                ]
-            };
+            var root = story();
+            root.content('新的故事');
+            story(root).content('起');
+            story(root).content('承');
+            story(root).content('转');
+            story(root).content('合');
+            return root;
         }
 
         var storyPrefix = 'myNoval_';

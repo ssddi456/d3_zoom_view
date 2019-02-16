@@ -1,4 +1,4 @@
-define(["require", "exports", "knockout", "dagre-d3", "d3", "../util/dagre_util", "../entities/story", "./context_menu"], function (require, exports, ko, dagre_d3_1, d3, dagre_util_1, story_1, context_menu_1) {
+define(["require", "exports", "knockout", "dagre-d3", "d3", "../util/dagre_util", "../entities/story", "./context_menu", "./dialog"], function (require, exports, ko, dagre_d3_1, d3, dagre_util_1, story_1, context_menu_1, dialog_1) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     ko.bindingHandlers['dagre-view'] = {
@@ -70,6 +70,21 @@ define(["require", "exports", "knockout", "dagre-d3", "d3", "../util/dagre_util"
                     }
                 }]);
             var itemContext = context_menu_1.makeContextMenu(svg, itemContextMenu, [{
+                    name: 'edit content',
+                    click: function (itemContext) {
+                        var ref = itemContext.ref;
+                        dialog_1.editDialog.show(ref.content(), function (editedContent) {
+                            if (editedContent != null) {
+                                ref.content(editedContent);
+                                dagre_util_1.storyToGraph(originData, g);
+                                // Run the renderer. This is what draws the final graph.
+                                renderer(DAGContainer, g);
+                                doCenterToNode(itemContext);
+                            }
+                        });
+                    }
+                },
+                {
                     name: 'add Child',
                     click: function (itemContext) {
                         var ref = itemContext.ref;

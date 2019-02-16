@@ -10,8 +10,8 @@ export interface Story {
     parentId?: string;
     content: KnockoutObservable<string>;
     childNodes: Story[];
-    characters: KnockoutObservable<Character[]>;
-    tags: KnockoutObservable<Tag[]>;
+    characters: KnockoutObservableArray<Character>;
+    tags: KnockoutObservableArray<Tag>;
     isActive: KnockoutObservable<boolean>;
     hasFocus: KnockoutObservable<boolean>;
     removed: boolean;
@@ -46,11 +46,15 @@ export const story = function (parentNode?: Story, childIdx?: number) {
         parent: parentNode,
     };
 
-    if (parentNode && childIdx !== undefined) {
+    if (parentNode) {
         if (!parentNode.childNodes) {
             parentNode.childNodes = [];
         }
-        parentNode.childNodes.splice(childIdx, 0, newNode);
+        if (childIdx !== undefined) {
+            parentNode.childNodes.splice(childIdx, 0, newNode);
+        } else {
+            parentNode.childNodes.push(newNode);
+        }
     }
     return newNode;
 } as Entity<Story, StoryJSON>;

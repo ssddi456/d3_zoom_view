@@ -34,6 +34,8 @@ function walkEachChild(stories: Story[],
 }
 
 export function storyToGraph(story: Story, graph: graphlib.Graph) {
+    console.log( story );
+    
     setStoryNode(graph, story);
     if (story.childNodes.length) {
         walkEachChild(story.childNodes, story, graph, function (element, parent, graph){

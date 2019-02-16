@@ -22,7 +22,7 @@ define(["require", "exports", "knockout"], function (require, exports, ko) {
                             var $textarea = $element.find('textarea, input');
                             $textarea.focus();
                             function setHeight() {
-                                $textarea.height($textarea[0].scrollHeight - parseFloat($textarea.css('padding-top')) - parseFloat($textarea.css('padding-bottom')));
+                                $textarea.height($textarea.get(0).scrollHeight - parseFloat($textarea.css('padding-top')) - parseFloat($textarea.css('padding-bottom')));
                             }
                             if (vm.type == 'textarea') {
                                 setHeight();

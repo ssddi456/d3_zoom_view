@@ -6,6 +6,7 @@ import { storyToGraph, createLineD, centralToNode, showAllDecestant, hideAllDece
 import { D3ZoomEvent, ZoomTransform } from 'd3';
 import { Story, story } from '../entities/story';
 import { buildBtns, MenuDirection, makeContextMenu } from './context_menu';
+import { editDialog } from './dialog';
 
 export interface StoryNode extends Node {
     ref: Story;
@@ -107,6 +108,21 @@ ko.bindingHandlers['dagre-view'] = {
 
         const itemContext = makeContextMenu<StoryNode>(svg, itemContextMenu,
             [{
+                name: 'edit content',
+                click(itemContext) {
+                    const ref = itemContext.ref;
+                    editDialog.show(ref.content(), function ( editedContent) {
+                        if(editedContent!= null ) {
+                            ref.content(editedContent);
+                            storyToGraph(originData, g);
+                            // Run the renderer. This is what draws the final graph.
+                            renderer(DAGContainer as any, g);         
+                            doCenterToNode(itemContext);
+                          }
+                    });
+                }
+            },
+            {
                 name: 'add Child',
                 click(itemContext) {
                     const ref = itemContext.ref;

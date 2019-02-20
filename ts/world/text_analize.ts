@@ -3,6 +3,14 @@ import * as highlight_token from '../components/highlight_token';
 export const components = {
     highlight_token,
 };
+/*
+1. 词性标注
+2. 人名收集
+3. 人名-章节
+4. 名词 动词 形容词收集
+5. 关键词-章节
+6. 关键词-章节类型
+*/
 
 const text = [{ "flag": "nr", "word": "\u5b54\u4e59\u5df1" }, { "flag": "v", "word": "\u662f" }, { "flag": "v", "word": "\u7ad9" }, {
     "flag":
